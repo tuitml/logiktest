@@ -27,6 +27,7 @@ const feldB: FeldModul<string, RegelKontext> = {
 
 function neuerStore(injector: Injector): FeldStore<RegelKontext> {
   return new FeldStore<RegelKontext>(
+    'test',
     [feldA, feldB],
     (s) => ({
       wert: <T>(id: string) => s.feld<T>(id).rohWert(),

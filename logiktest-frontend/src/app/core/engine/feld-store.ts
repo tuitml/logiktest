@@ -1,10 +1,11 @@
-import { Injector } from '@angular/core';
+import { effect, Injector } from '@angular/core';
 
 import type { FeldId } from './feld.model';
 import type { FeldModul } from './feld-modul';
 import { FeldRuntime } from './feld-runtime';
 import { RegelEngine } from './regel-engine';
 import type { RegelKontext } from './regel-kontext';
+import { log, regelLog } from './engine-logger';
 
 /**
  * Verwaltet eine Menge zusammengehöriger Felder (z. B. ein Tab oder eine Deckung)
@@ -21,6 +22,8 @@ export class FeldStore<K extends RegelKontext = RegelKontext> {
   private readonly kontext: K;
 
   constructor(
+    /** Name für die Logausgabe, z. B. "vertragsdaten" oder "deckung#1". */
+    private readonly name: string,
     module: ReadonlyArray<FeldModul<any, K>>,
     kontextFabrik: (store: FeldStore<K>) => K,
     injector: Injector,
@@ -36,7 +39,14 @@ export class FeldStore<K extends RegelKontext = RegelKontext> {
       this.runtimes.set(m.id, new FeldRuntime(m as FeldModul<unknown, K>, ctx, injector));
     }
 
-    this.engine = new RegelEngine<K>(this.module, (id) => this.runtimes.get(id), ctx);
+    this.engine = new RegelEngine<K>(this.name, this.module, (id) => this.runtimes.get(id), ctx);
+
+    if (regelLog.aktiv && regelLog.verbose) {
+      for (const [id, rt] of this.runtimes) {
+        effect(() => log.steuerung(this.name, id, rt.steuerung()), { injector });
+        effect(() => log.wertebereich(this.name, id, rt.optionen().length), { injector });
+      }
+    }
   }
 
   feld<T = unknown>(id: FeldId): FeldRuntime<T, K> {
@@ -57,16 +67,18 @@ export class FeldStore<K extends RegelKontext = RegelKontext> {
 
   /** Frischer Start: Initialwerte setzen, danach Regeln einmal durchlaufen lassen (Defaults). */
   initialisieren(): void {
+    log.init(this.name);
     for (const [id, m] of this.module) {
       this.runtimes.get(id)!.rohWert.set(m.initialWert);
     }
-    this.engine.propagieren();
+    this.engine.propagieren('initialisieren');
   }
 
   /** Benutzeränderung: Wert setzen, danach greifen die Regeln wieder. */
   benutzerAenderung<T>(id: FeldId, wert: T | undefined): void {
+    log.benutzerAenderung(this.name, id, wert);
     this.feld(id).rohWert.set(wert);
-    this.engine.propagieren();
+    this.engine.propagieren(`benutzerAenderung ${id}`);
   }
 
   /**
@@ -74,8 +86,8 @@ export class FeldStore<K extends RegelKontext = RegelKontext> {
    * Wird z. B. von der Deckungs-Logik genutzt, wenn sich eine Nachbar-Deckung
    * geändert hat.
    */
-  regelnAnwenden(): void {
-    this.engine.propagieren();
+  regelnAnwenden(grund = 'geschwister-aenderung'): void {
+    this.engine.propagieren(grund);
   }
 
   /**
@@ -84,12 +96,15 @@ export class FeldStore<K extends RegelKontext = RegelKontext> {
    * weil sie reine `computed` sind.
    */
   importieren(daten: Readonly<Record<FeldId, unknown>>): void {
+    const uebernommen: Record<FeldId, unknown> = {};
     for (const [id, wert] of Object.entries(daten)) {
       const rt = this.runtimes.get(id);
       if (rt) {
         rt.rohWert.set(wert);
+        uebernommen[id] = wert;
       }
     }
+    log.importiert(this.name, uebernommen);
   }
 
   zuruecksetzen(): void {

@@ -36,8 +36,13 @@ export class NutzungRuntime {
   readonly id = neueId();
   private readonly felder: FeldStore<NutzungKontext>;
 
-  constructor(umgebung: { auth: AuthLese; risikoartDerDeckung: () => RisikoartId | undefined }, injector: Injector) {
+  constructor(
+    umgebung: { auth: AuthLese; risikoartDerDeckung: () => RisikoartId | undefined },
+    injector: Injector,
+    name = 'nutzung',
+  ) {
     this.felder = new FeldStore<NutzungKontext>(
+      name,
       NUTZUNG_FELDER,
       (s) => baueNutzungKontext(s, umgebung),
       injector,
@@ -97,6 +102,7 @@ export class GrundstueckRuntime {
       risikoartDerDeckung: () => RisikoartId | undefined;
     },
     private readonly injector: Injector,
+    private readonly name = 'grundstueck',
   ) {}
 
   initialisieren(): void {
@@ -105,7 +111,11 @@ export class GrundstueckRuntime {
   }
 
   nutzungHinzufuegen(): void {
-    const n = new NutzungRuntime(this.umgebung, this.injector);
+    const n = new NutzungRuntime(
+      this.umgebung,
+      this.injector,
+      `${this.name}/nutzung#${this._nutzungen().length + 1}`,
+    );
     n.initialisieren();
     this._nutzungen.update((l) => [...l, n]);
   }
@@ -140,8 +150,10 @@ export class FahrzeugRuntime {
       risikoartDerDeckung: () => RisikoartId | undefined;
     },
     injector: Injector,
+    name = 'fahrzeug',
   ) {
     this.felder = new FeldStore<FahrzeugKontext>(
+      name,
       FAHRZEUG_FELDER,
       (s) => baueFahrzeugKontext(s, umgebung),
       injector,
@@ -190,8 +202,10 @@ export class DeckungRuntime {
   constructor(
     private readonly umgebung: DeckungUmgebungExtern,
     private readonly injector: Injector,
+    private readonly name = 'deckung',
   ) {
     this.felder = new FeldStore<DeckungKontext>(
+      this.name,
       DECKUNG_FELDER,
       (s) =>
         baueDeckungKontext(s, {
@@ -270,6 +284,7 @@ export class DeckungRuntime {
         risikoartDerDeckung: () => this.risikoartWert(),
       },
       this.injector,
+      `${this.name}/fahrzeug#${this._fahrzeuge().length + 1}`,
     );
     fz.initialisieren();
     this._fahrzeuge.update((l) => [...l, fz]);
@@ -288,6 +303,7 @@ export class DeckungRuntime {
     const gr = new GrundstueckRuntime(
       { auth: this.umgebung.auth, risikoartDerDeckung: () => this.risikoartWert() },
       this.injector,
+      `${this.name}/grundstueck#${this._grundstuecke().length + 1}`,
     );
     gr.initialisieren();
     this._grundstuecke.update((l) => [...l, gr]);

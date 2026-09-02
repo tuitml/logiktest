@@ -23,12 +23,15 @@ export class DeckungStore {
   private readonly _deckungen = signal<ReadonlyArray<DeckungRuntime>>([]);
   readonly deckungen = this._deckungen.asReadonly();
 
+  private deckungZaehler = 0;
+
   constructor() {
     this.initialisieren();
   }
 
   initialisieren(): void {
     this._deckungen.set([]);
+    this.deckungZaehler = 0;
     const erste = this.erzeugeDeckung();
     this._deckungen.set([erste]);
     erste.initialisieren();
@@ -46,6 +49,7 @@ export class DeckungStore {
             .filter((r): r is RisikoartId => r != null),
       },
       this.injector,
+      `deckung#${++this.deckungZaehler}`,
     );
   }
 
@@ -58,9 +62,12 @@ export class DeckungStore {
     if (!this.kannHinzufuegen()) {
       return;
     }
+    const bestand = this._deckungen();
     const neue = this.erzeugeDeckung();
     this._deckungen.update((l) => [...l, neue]);
     neue.initialisieren();
+    // bestehende Deckungen kennen jetzt eine weitere Nachbar-Risikoart
+    bestand.forEach((d) => d.regelnAnwenden());
   }
 
   entfernen(deckung: DeckungRuntime): void {

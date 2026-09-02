@@ -20,6 +20,7 @@ export class VertragsdatenStore {
   private readonly plzDienst = inject(PlzService);
 
   readonly store = new FeldStore<VertragsdatenKontext>(
+    'vertragsdaten',
     VERTRAGSDATEN_FELDER,
     (s) =>
       baueVertragsdatenKontext(s, this.auth.lese(), {

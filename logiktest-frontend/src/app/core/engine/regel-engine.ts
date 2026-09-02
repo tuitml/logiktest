@@ -4,6 +4,7 @@ import type { FeldModul } from './feld-modul';
 import type { FeldRuntime } from './feld-runtime';
 import type { RegelKontext } from './regel-kontext';
 import { gleich } from './gleichheit';
+import { fmtWert, log, regelLog } from './engine-logger';
 
 /**
  * Führt die Datenmanipulation aus – der einzige imperative Teil der Engine.
@@ -20,6 +21,7 @@ export class RegelEngine<K extends RegelKontext = RegelKontext> {
   private readonly reihenfolge: ReadonlyArray<FeldId>;
 
   constructor(
+    private readonly name: string,
     private readonly module: ReadonlyMap<FeldId, FeldModul<unknown, K>>,
     private readonly runtime: (id: FeldId) => FeldRuntime<unknown, K> | undefined,
     private readonly kontext: () => K,
@@ -27,8 +29,12 @@ export class RegelEngine<K extends RegelKontext = RegelKontext> {
     this.reihenfolge = topologisch(module);
   }
 
-  propagieren(maxIter = 20): void {
+  propagieren(grund: string, maxIter = 20): void {
+    const zeilen: string[] = [];
+    let runden = 0;
+
     for (let runde = 0; runde < maxIter; runde++) {
+      runden = runde + 1;
       let geaendert = false;
 
       for (const id of this.reihenfolge) {
@@ -40,19 +46,30 @@ export class RegelEngine<K extends RegelKontext = RegelKontext> {
 
         const ergebnis = modul.datenmanipulation(this.kontext());
         if (ergebnis === BEHALTEN) {
+          if (regelLog.verbose) {
+            zeilen.push(`${id}.datenmanipulation → behalten (${fmtWert(rt.rohWert())})`);
+          }
           continue;
         }
         if (!gleich(ergebnis.wert, rt.rohWert())) {
+          zeilen.push(
+            `${id}.datenmanipulation: ${fmtWert(rt.rohWert())} → ${fmtWert(ergebnis.wert)}`,
+          );
           rt.rohWert.set(ergebnis.wert);
           geaendert = true;
         }
       }
 
       if (!geaendert) {
-        return;
+        break;
       }
     }
-    console.warn(`[RegelEngine] Fixpunkt nach ${maxIter} Iterationen nicht erreicht.`);
+
+    log.propagieren(this.name, grund, runden, zeilen);
+
+    if (runden >= maxIter) {
+      console.warn(`[RegelEngine:${this.name}] Fixpunkt nach ${maxIter} Iterationen nicht erreicht.`);
+    }
   }
 }
 

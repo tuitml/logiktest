@@ -5,13 +5,12 @@ import { risikoartOptionen } from '../kombinatorik';
 import { katalogFuer, type RisikoartOption } from '../risikoart-katalog';
 
 /**
- * Katalog des aktuellen Versicherers, gefiltert um:
- *   - bereits in anderen Deckungen vergebene Risikoarten
- *   - die Fahrer-RS-Paarungsregel (RA10 -> nur Partner)
+ * Katalog des aktuellen Versicherers, gefiltert um die Kombinatorik-Regeln
+ * (Eindeutigkeit, RA15 allein, Fahrer-RS-Paarung).
  */
 export function risikoartWertebereich(ctx: DeckungKontext): ReadonlyArray<RisikoartOption> {
   const katalog = katalogFuer(ctx.wert<Versicherer>('versicherer'));
-  return risikoartOptionen(katalog, ctx.andereRisikoarten(), ctx.risikoartDieserDeckung());
+  return risikoartOptionen(katalog, ctx.andereRisikoarten());
 }
 
 export function istRisikoartWaehlbar(ctx: DeckungKontext, risikoart: RisikoartId): boolean {

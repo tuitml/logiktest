@@ -3,6 +3,7 @@ import { computed, effect, Injector, signal, Signal, untracked, WritableSignal }
 import type { FeldView, SelectOption, Steuerung } from './feld.model';
 import type { FeldModul } from './feld-modul';
 import type { RegelKontext } from './regel-kontext';
+import { gleich } from './gleichheit';
 
 /**
  * Laufzeit-Zustand eines Feldes.
@@ -42,7 +43,20 @@ export class FeldRuntime<T = unknown, K extends RegelKontext = RegelKontext> {
       if (!this.steuerung().relevant) {
         return [];
       }
-      return this.modul.validierung ? this.modul.validierung(this.kontext()) : [];
+      const eigene = this.modul.validierung ? this.modul.validierung(this.kontext()) : [];
+
+      // Ein Feld mit Wertebereich kann nie mit einem Wert außerhalb der aktuellen
+      // Optionen gültig sein. Im normalen Ablauf räumt die Datenmanipulation solche
+      // Werte weg; nach einem Import (kein Regel-Durchlauf) macht diese Prüfung eine
+      // inkonsistente Auswahl sichtbar.
+      if (this.modul.wertebereich && eigene.length === 0) {
+        const wert = this.rohWert();
+        const optionen = this.optionen();
+        if (wert != null && !optionen.some((o) => gleich(o.wert, wert))) {
+          return ['Wert ist im aktuellen Kontext nicht zulässig.'];
+        }
+      }
+      return eigene;
     });
 
     this.fehler = computed<ReadonlyArray<string>>(() => [

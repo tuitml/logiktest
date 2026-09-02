@@ -5,3 +5,4 @@ export * from './feld-store';
 export * from './regel-engine';
 export * from './regel-kontext';
 export * from './gleichheit';
+export * from './engine-logger';
