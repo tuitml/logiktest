@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { DeckungStore } from '../../deckungen/deckung.store';
-import { FeldHostComponent } from '../../../features/ui/feld-host.component';
-import { FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
+import { SelectFeldComponent } from '../../../features/ui/select-feld.component';
+import { SELECT_FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
 
 /**
  * Das Feld "Versicherer" gehört zu keinem Tab – es steht in der Kopfzeile der
@@ -15,8 +15,8 @@ import { FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vert
   selector: 'app-versicherer-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeldHostComponent],
-  template: FELD_TEMPLATE,
+  imports: [SelectFeldComponent],
+  template: SELECT_FELD_TEMPLATE,
 })
 export class VersichererFieldComponent extends VertragsdatenFeldBasis {
   protected readonly feldId = 'versicherer';

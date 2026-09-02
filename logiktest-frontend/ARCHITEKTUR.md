@@ -69,17 +69,20 @@ Baut auf demselben `FeldStore` auf, nur mit erweitertem Kontext:
 - Web Components: **HUK Shield** (`s-text-field` / `s-select` / `s-menu-item`),
   geladen per `<script>`/`<link>` in `src/index.html` (CDN). Angular nutzt
   `CUSTOM_ELEMENTS_SCHEMA`.
-- `features/ui/feld-host.component.ts` – die **einzige** Stelle, die die `s-*`-
-  Components kennt. Bindet genau EIN `view()`-Objekt:
-  `s-text-field`: `[value]`, `[input-type]`, `[disabled]=!bearbeitbar`,
-  `[severity]=fehler? 'critical':'none'`, `(sChange)` -> `CustomEvent<string>`.
-  `s-select`: `[value]` (String), `@for`-`s-menu-item` aus `view().optionen`,
-  `(sChange)` -> `CustomEvent<string[]>` (erster Eintrag, zurückgemappt auf den
-  echten Options-Wert). Rendert nichts bei `!view().sichtbar`; `display:contents`
-  am Host (`.feld-slot`) -> unsichtbare Felder belegen keine Grid-Zelle, folgende
-  Felder rücken nach.
+- Zwei Wrapper, je einer pro Feldtyp – beide binden genau EIN `view()`-Objekt,
+  melden über `wertGeaendert`, rendern nichts bei `!view().sichtbar`, gemeinsame
+  Basis `feld-wrapper.basis.ts` (`display:contents` am Host = `.feld-slot`, also
+  keine Grid-Zelle für unsichtbare Felder → nachrücken):
+  - `text-feld.component.ts` (`app-text-feld`) → `s-text-field`
+    (`[value]`, `[input-type]` je `typ`, `[disabled]=!bearbeitbar`,
+    `[severity]`, `(sChange)` = `CustomEvent<string>`, bei `zahl` → `Number()`).
+  - `select-feld.component.ts` (`app-select-feld`) → `s-select` + `@for`-`s-menu-item`
+    aus `view().optionen`; `(sChange)` = `CustomEvent<string[]>` (erster Eintrag,
+    per String-Vergleich auf den echten Options-Wert zurückgemappt).
 - Pro Feld eine ~4-Zeilen-Komponente (`<feld>-field.component.ts`), die nur ihre
-  `feldId` kennt und `rt.view()` an `app-feld-host` weiterreicht.
+  `feldId` kennt und `rt.view()` an `app-text-feld` **oder** `app-select-feld`
+  weiterreicht (Templates `TEXT_FELD_TEMPLATE` / `SELECT_FELD_TEMPLATE` aus
+  `vertragsdaten-feld.basis.ts`).
 - `features/formular/` – Shell mit 3 Tabs, `tab-konfiguration.ts` ist die **einzige**
   Stelle, die Feld ↔ Tab kennt. `formular.store.ts` klammert alles zusammen
   (Navigation nur bei gültigem Vor-Tab, Import/Reset, `payload()`).

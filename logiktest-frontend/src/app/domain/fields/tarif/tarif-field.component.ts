@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { FeldHostComponent } from '../../../features/ui/feld-host.component';
-import { FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
+import { TextFeldComponent } from '../../../features/ui/text-feld.component';
+import { TEXT_FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
 
 @Component({
   selector: 'app-tarif-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeldHostComponent],
-  template: FELD_TEMPLATE,
+  imports: [TextFeldComponent],
+  template: TEXT_FELD_TEMPLATE,
 })
 export class TarifFieldComponent extends VertragsdatenFeldBasis {
   protected readonly feldId = 'tarif';

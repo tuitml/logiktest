@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { FeldHostComponent } from '../../ui/feld-host.component';
+import { SelectFeldComponent } from '../../ui/select-feld.component';
 import type { DeckungRuntime, FahrzeugRuntime } from '../../../domain/deckungen/deckung.runtime';
 import type { Wagniskennziffer } from '../../../domain/deckungen/deckung.typen';
 
@@ -8,11 +8,11 @@ import type { Wagniskennziffer } from '../../../domain/deckungen/deckung.typen';
   selector: 'app-fahrzeug-zeile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeldHostComponent],
+  imports: [SelectFeldComponent],
   template: `
     <div class="unterzeile">
       <span class="unterzeile-titel">Fahrzeug {{ position() }}</span>
-      <app-feld-host
+      <app-select-feld
         [view]="fahrzeug().wagniskennzifferView()"
         (wertGeaendert)="aendern($event)"
       />

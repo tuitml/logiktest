@@ -9,15 +9,15 @@
   </div>
 
   <div class="feld-grid">
-    <app-feld-host
+    <app-select-feld
       [view]="deckung().risikoartView()"
       (wertGeaendert)="feldGeaendert('risikoart', $event)"
     />
-    <app-feld-host
+    <app-text-feld
       [view]="deckung().rabattView()"
       (wertGeaendert)="feldGeaendert('rabatt', $event)"
     />
-    <app-feld-host
+    <app-text-feld
       [view]="deckung().zuschlagView()"
       (wertGeaendert)="feldGeaendert('zuschlag', $event)"
     />

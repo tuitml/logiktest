@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 
-import { FeldHostComponent } from '../../ui/feld-host.component';
+import { SelectFeldComponent } from '../../ui/select-feld.component';
+import { TextFeldComponent } from '../../ui/text-feld.component';
 import { DeckungStore } from '../../../domain/deckungen/deckung.store';
 import type { DeckungRuntime } from '../../../domain/deckungen/deckung.runtime';
 import { FahrzeugZeileComponent } from './fahrzeug-zeile.component';
@@ -10,7 +11,7 @@ import { GrundstueckKarteComponent } from './grundstueck-karte.component';
   selector: 'app-deckung-karte',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeldHostComponent, FahrzeugZeileComponent, GrundstueckKarteComponent],
+  imports: [SelectFeldComponent, TextFeldComponent, FahrzeugZeileComponent, GrundstueckKarteComponent],
   templateUrl: './deckung-karte.component.html',
   styleUrl: './deckung-karte.component.css',
 })

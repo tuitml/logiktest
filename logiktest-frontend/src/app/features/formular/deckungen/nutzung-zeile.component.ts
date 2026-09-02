@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { FeldHostComponent } from '../../ui/feld-host.component';
+import { SelectFeldComponent } from '../../ui/select-feld.component';
+import { TextFeldComponent } from '../../ui/text-feld.component';
 import type {
   GrundstueckRuntime,
   NutzungRuntime,
@@ -12,16 +13,16 @@ import { einheitFuer } from '../../../domain/deckungen/nutzung-katalog';
   selector: 'app-nutzung-zeile',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FeldHostComponent],
+  imports: [SelectFeldComponent, TextFeldComponent],
   template: `
     <div class="unterzeile unterzeile--nutzung">
       <span class="unterzeile-titel">Nutzung {{ position() }}</span>
-      <app-feld-host
+      <app-select-feld
         [view]="nutzung().nutzungsartView()"
         (wertGeaendert)="nutzungsart($event)"
       />
       <div class="wert-mit-einheit">
-        <app-feld-host [view]="nutzung().wertView()" (wertGeaendert)="wert($event)" />
+        <app-text-feld [view]="nutzung().wertView()" (wertGeaendert)="wert($event)" />
         <span class="einheit">{{ einheitLabel() }}</span>
       </div>
       @if (grundstueck().darfNutzungEntfernen()) {

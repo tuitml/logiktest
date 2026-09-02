@@ -26,3 +26,18 @@
   font-weight: 700;
   color: #0f2c3f;
 }
+
+/* --- Feld-Wrapper (TextFeldComponent / SelectFeldComponent) --- */
+.feld-zelle {
+  min-width: 0;
+}
+.feld-fehler {
+  margin: 0.25rem 0 0;
+  color: var(--s-color-critical, #b23b3b);
+  font-size: 0.8rem;
+}
+.feld-hinweis {
+  margin: 0.25rem 0 0;
+  color: #4a6572;
+  font-size: 0.8rem;
+}
