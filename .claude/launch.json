@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "logiktest-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "logiktest-frontend", "start"],
+      "port": 4200
+    }
+  ]
+}

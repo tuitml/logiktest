@@ -1,0 +1,80 @@
+<div class="seite">
+  <header class="kopf">
+    <h1 class="titel">RS-Berechnungssystem</h1>
+
+    <div class="kopf-aktionen">
+      <label class="link">
+        <input type="file" accept="application/json,.json" (change)="waehleDatei($event)" hidden />
+        Importieren
+      </label>
+      <button type="button" class="link" (click)="store.zuruecksetzen()">Daten zurücksetzen</button>
+    </div>
+
+    <div class="versicherer-slot">
+      <app-versicherer-field />
+    </div>
+  </header>
+
+  <!-- Demo: Rollen umschalten, um die rollenabhängigen Regeln vorzuführen -->
+  <div class="rollen-leiste">
+    <span>Rollen (Demo):</span>
+    @for (rolle of ['RBBER_HUK', 'RBBER_VRK']; track rolle) {
+      <label>
+        <input
+          type="checkbox"
+          [checked]="auth.rollen().includes($any(rolle))"
+          (change)="rolleUmschalten($any(rolle))"
+        />
+        {{ rolle }}
+      </label>
+    }
+  </div>
+
+  @if (store.importHinweis(); as hinweis) {
+    <p class="import-hinweis">{{ hinweis }}</p>
+  }
+
+  <div class="layout">
+    <nav class="tab-liste">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          class="tab"
+          [class.tab--aktiv]="istTabAktiv(tab.id)"
+          [disabled]="!store.darfWechselnZu(tab.id)"
+          (click)="store.wechsleZu(tab.id)"
+        >
+          <span class="tab-nummer">{{ tab.nummer }}</span>
+          <span class="tab-titel">{{ tab.titel }}</span>
+        </button>
+      }
+    </nav>
+
+    <section class="karte">
+      @switch (store.aktiverTab()) {
+        @case ('vertragsdaten') {
+          <app-tab-vertragsdaten />
+        }
+        @case ('deckungen') {
+          <app-tab-deckungen />
+        }
+        @case ('ergebnis') {
+          <app-tab-ergebnis />
+        }
+      }
+
+      @if (store.aktiverTab() !== 'ergebnis') {
+        <div class="karte-fuss">
+          <button
+            type="button"
+            class="weiter"
+            [disabled]="!store.darfWechselnZu(store.aktiverTab() === 'vertragsdaten' ? 'deckungen' : 'ergebnis')"
+            (click)="store.weiter()"
+          >
+            Weiter ›
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</div>

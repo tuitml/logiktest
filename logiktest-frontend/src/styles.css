@@ -1,0 +1,70 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+
+/* --- Feld-Grid: immer 2 Spalten, unsichtbare Felder erzeugen keine Zelle --- */
+.feld-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+/* Wrapper-Komponenten belegen selbst keine Grid-Zelle: nur die real gerenderte
+   .feld-zelle ist ein Grid-Item. Unsichtbare Felder rendern nichts -> nachrücken. */
+.feld-slot {
+  display: contents;
+}
+@media (max-width: 640px) {
+  .feld-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tab-ueberschrift {
+  margin: 0 0 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f2c3f;
+}
+
+/* --- Darstellung der Web Components ds-input / ds-select (Light DOM) --- */
+.ds-feld {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+.ds-feld__label {
+  font-weight: 600;
+  color: #0f2c3f;
+}
+.ds-feld__control {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #b9c7cf;
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+  color: #0f2c3f;
+}
+.ds-feld__control:focus {
+  outline: 2px solid #1f6f8b;
+  outline-offset: 1px;
+}
+.ds-feld__control:disabled {
+  background: #eef2f4;
+  color: #6b7c86;
+}
+.ds-feld__fehler {
+  color: #b23b3b;
+  font-size: 0.8rem;
+}
+.ds-feld__hinweis {
+  color: #4a6572;
+  font-size: 0.8rem;
+}
+
+/* Rot umrandete Pflichtfelder wie im Referenz-Screenshot, sobald ein Fehler anliegt */
+.ds-feld:has(.ds-feld__fehler:not([hidden])) .ds-feld__control {
+  border-color: #d98a8a;
+  background: #fdf1f1;
+}
