@@ -1,7 +1,7 @@
 import type { Steuerung } from '../../../core/engine';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /** Nie sichtbar, nie veränderbar – abgeleitet und intern verwendet. */
-export function tarifgruppeSteuerung(_ctx: VertragsdatenKontext): Steuerung {
+export function tarifgruppeSteuerung(_ctx: VertragsdatenContext): Steuerung {
   return { sichtbar: false, bearbeitbar: false, relevant: true };
 }

@@ -9,7 +9,8 @@ import { PreisstandFieldComponent } from '../../domain/fields/preisstand/preisst
 
 /**
  * Nur Layout: die Feld-Komponenten in einem 2-Spalten-Grid. Unsichtbare Felder
- * rendern nichts (siehe TextFeldComponent / SelectFeldComponent) -> nachfolgende Felder rücken auf.
+ * rendern nichts (siehe TextFieldComponent / SelectFieldComponent) -> nachfolgende
+ * Felder rücken auf.
  */
 @Component({
   selector: 'app-tab-vertragsdaten',
@@ -24,8 +25,8 @@ import { PreisstandFieldComponent } from '../../domain/fields/preisstand/preisst
     PreisstandFieldComponent,
   ],
   template: `
-    <h2 class="tab-ueberschrift">Vertragsdaten</h2>
-    <div class="feld-grid">
+    <h2 class="tab-heading">Vertragsdaten</h2>
+    <div class="field-grid">
       <app-tarif-field />
       <app-postleitzahl-field />
       <app-sb-staffel-field />

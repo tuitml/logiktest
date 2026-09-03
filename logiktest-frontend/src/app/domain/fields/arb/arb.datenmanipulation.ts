@@ -1,6 +1,5 @@
-import { leeren, setze } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { DatenmanipulationResult } from '../../../core/engine';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /**
  * ARB ist immer eine Jahreszahl, abgeleitet aus dem Tarif:
@@ -8,11 +7,11 @@ import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
  *   Beispiel: Tarif "N1526" -> ARB 2015.
  * Ohne (verwertbaren) Tarif: undefined.
  */
-export function arbDatenmanipulation(ctx: VertragsdatenKontext): DatenManipulationErgebnis<number> {
-  const tarif = ctx.wert<string>('tarif');
-  const stellen = tarif?.slice(1, 3);
-  if (!stellen || !/^\d{2}$/.test(stellen)) {
-    return leeren();
+export function arbDatenmanipulation(ctx: VertragsdatenContext): DatenmanipulationResult<number> {
+  const tarif = ctx.value<string>('tarif');
+  const digits = tarif?.slice(1, 3);
+  if (!digits || !/^\d{2}$/.test(digits)) {
+    return undefined;
   }
-  return setze(Number(`20${stellen}`));
+  return Number(`20${digits}`);
 }

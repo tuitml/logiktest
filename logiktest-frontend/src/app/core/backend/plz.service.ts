@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class PlzService {
-  private readonly bekannt = new Set([
+  private readonly known = new Set([
     '10115',
     '20095',
     '30159',
@@ -21,9 +21,9 @@ export class PlzService {
     '15236',
   ]);
 
-  pruefe(plz: string): Promise<boolean> {
-    return new Promise((aufloesen) => {
-      setTimeout(() => aufloesen(this.bekannt.has(plz)), 500);
+  check(plz: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(this.known.has(plz)), 500);
     });
   }
 }

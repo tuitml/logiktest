@@ -8,37 +8,37 @@ import { VersichererFieldComponent } from './versicherer-field.component';
 describe('VersichererFieldComponent – Deckungen bei Versichererwechsel', () => {
   let deckungen: DeckungStore;
   let vertragsdaten: VertragsdatenStore;
-  let aendern: (wert: unknown) => void;
+  let change: (value: unknown) => void;
 
   beforeEach(() => {
-    TestBed.inject(AuthStore).setzeRollen(['RBBER_HUK', 'RBBER_VRK']);
+    TestBed.inject(AuthStore).setClaims(['huk', 'vrk']);
     vertragsdaten = TestBed.inject(VertragsdatenStore);
-    vertragsdaten.store.zuruecksetzen();
+    vertragsdaten.store.initialize();
     deckungen = TestBed.inject(DeckungStore);
-    deckungen.initialisieren();
+    deckungen.initialize();
 
     const fixture = TestBed.createComponent(VersichererFieldComponent);
-    const komponente = fixture.componentInstance as unknown as { aendern(w: unknown): void };
-    aendern = (w) => komponente.aendern(w);
+    const component = fixture.componentInstance as unknown as { change(v: unknown): void };
+    change = (v) => component.change(v);
   });
 
   it('verwirft alle Deckungen und startet neu mit der Default-Deckung des neuen Versicherers', () => {
-    deckungen.hinzufuegen();
+    deckungen.add();
     expect(deckungen.deckungen().length).toBe(2);
 
-    aendern('VRK');
+    change('VRK');
 
     expect(deckungen.deckungen().length).toBe(1);
-    expect(deckungen.deckungen()[0].risikoartWert()).toBe('300023'); // VRK-Standard
+    expect(deckungen.deckungen()[0].risikoartValue()).toBe('300023'); // VRK-Standard
   });
 
   it('lässt die Deckungen unangetastet, wenn sich der Versicherer nicht ändert', () => {
-    deckungen.hinzufuegen();
-    const vorher = deckungen.deckungen();
+    deckungen.add();
+    const before = deckungen.deckungen();
 
-    aendern(vertragsdaten.store.feld('versicherer').rohWert()); // gleicher Wert
+    change(vertragsdaten.store.field('versicherer').value()); // gleicher Wert
 
-    expect(deckungen.deckungen()).toBe(vorher);
+    expect(deckungen.deckungen()).toBe(before);
     expect(deckungen.deckungen().length).toBe(2);
   });
 });

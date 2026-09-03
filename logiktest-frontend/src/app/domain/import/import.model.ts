@@ -1,9 +1,9 @@
-import type { VertragsdatenFeldId } from '../fields/vertragsdaten.kontext';
-import type { RisikoartId } from '../deckungen/deckung.typen';
+import type { VertragsdatenFieldId } from '../fields/vertragsdaten.context';
+import type { RisikoartId } from '../deckungen/deckung.types';
 
 /** Ergebnis des Mappings Backend -> App. Nur Werte, keine Regeln. */
-export interface ImportErgebnis {
-  readonly vertragsdaten: Partial<Record<VertragsdatenFeldId, unknown>>;
+export interface ImportResult {
+  readonly vertragsdaten: Partial<Record<VertragsdatenFieldId, unknown>>;
   readonly deckungen: ReadonlyArray<ImportDeckung>;
 }
 

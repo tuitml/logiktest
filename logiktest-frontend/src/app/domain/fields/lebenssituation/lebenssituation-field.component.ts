@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { SelectFeldComponent } from '../../../features/ui/select-feld.component';
-import { SELECT_FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
+import { SelectFieldComponent } from '../../../features/ui/select-field.component';
+import { SELECT_FIELD_TEMPLATE, VertragsdatenFieldBase } from '../../../features/ui/vertragsdaten-field.base';
 
 @Component({
   selector: 'app-lebenssituation-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SelectFeldComponent],
-  template: SELECT_FELD_TEMPLATE,
+  imports: [SelectFieldComponent],
+  template: SELECT_FIELD_TEMPLATE,
 })
-export class LebenssituationFieldComponent extends VertragsdatenFeldBasis {
-  protected readonly feldId = 'lebenssituation';
+export class LebenssituationFieldComponent extends VertragsdatenFieldBase {
+  protected readonly fieldId = 'lebenssituation';
 }

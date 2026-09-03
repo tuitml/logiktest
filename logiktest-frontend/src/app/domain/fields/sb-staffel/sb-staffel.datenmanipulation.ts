@@ -1,7 +1,7 @@
-import { BEHALTEN, leeren } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
-import type { SbStaffel } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import { KEEP } from '../../../core/engine';
+import type { DatenmanipulationResult } from '../../../core/engine';
+import type { SbStaffel } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 import { sbStaffelWertebereich } from './sb-staffel.wertebereich';
 
 /**
@@ -9,12 +9,12 @@ import { sbStaffelWertebereich } from './sb-staffel.wertebereich';
  * wird das Feld auf undefined gesetzt.
  */
 export function sbStaffelDatenmanipulation(
-  ctx: VertragsdatenKontext,
-): DatenManipulationErgebnis<SbStaffel> {
-  const wert = ctx.wert<SbStaffel>('sbStaffel');
-  if (wert == null) {
-    return BEHALTEN;
+  ctx: VertragsdatenContext,
+): DatenmanipulationResult<SbStaffel> {
+  const value = ctx.value<SbStaffel>('sbStaffel');
+  if (value == null) {
+    return KEEP;
   }
-  const erlaubt = sbStaffelWertebereich(ctx).some((o) => o.wert === wert);
-  return erlaubt ? BEHALTEN : leeren();
+  const allowed = sbStaffelWertebereich(ctx).some((o) => o.value === value);
+  return allowed ? KEEP : undefined;
 }

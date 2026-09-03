@@ -1,9 +1,9 @@
-import type { SbStaffel } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { SbStaffel } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /** Pflichtfeld. */
-export function sbStaffelValidierung(ctx: VertragsdatenKontext): string[] {
-  return ctx.wert<SbStaffel>('sbStaffel') == null
+export function sbStaffelValidierung(ctx: VertragsdatenContext): string[] {
+  return ctx.value<SbStaffel>('sbStaffel') == null
     ? ['Selbstbeteiligung ist ein Pflichtfeld.']
     : [];
 }

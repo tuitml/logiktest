@@ -1,9 +1,9 @@
 import type { SelectOption } from '../../../core/engine';
-import type { SbStaffel } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { SbStaffel } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
-function option(wert: SbStaffel): SelectOption<SbStaffel> {
-  return { wert, label: `${wert} €` };
+function option(value: SbStaffel): SelectOption<SbStaffel> {
+  return { value, label: `${value} €` };
 }
 
 /**
@@ -12,9 +12,9 @@ function option(wert: SbStaffel): SelectOption<SbStaffel> {
  *   sonst         -> 150 / 300
  */
 export function sbStaffelWertebereich(
-  ctx: VertragsdatenKontext,
+  ctx: VertragsdatenContext,
 ): ReadonlyArray<SelectOption<SbStaffel>> {
-  const arb = ctx.wert<number>('arb');
+  const arb = ctx.value<number>('arb');
   if (arb != null && arb >= 2015 && arb <= 2019) {
     return [option(150), option(250)];
   }

@@ -3,40 +3,40 @@
 @import 'tailwindcss';
 
 /* --- Feld-Grid: immer 2 Spalten, unsichtbare Felder erzeugen keine Zelle --- */
-.feld-grid {
+.field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem 1.5rem;
   align-items: start;
 }
 /* Wrapper-Komponenten belegen selbst keine Grid-Zelle: nur die real gerenderte
-   .feld-zelle ist ein Grid-Item. Unsichtbare Felder rendern nichts -> nachrücken. */
-.feld-slot {
+   .field-cell ist ein Grid-Item. Unsichtbare Felder rendern nichts -> nachrücken. */
+.field-slot {
   display: contents;
 }
 @media (max-width: 640px) {
-  .feld-grid {
+  .field-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.tab-ueberschrift {
+.tab-heading {
   margin: 0 0 1.25rem;
   font-size: 1.4rem;
   font-weight: 700;
   color: #0f2c3f;
 }
 
-/* --- Feld-Wrapper (TextFeldComponent / SelectFeldComponent) --- */
-.feld-zelle {
+/* --- Feld-Wrapper (TextFieldComponent / SelectFieldComponent) --- */
+.field-cell {
   min-width: 0;
 }
-.feld-fehler {
+.field-error {
   margin: 0.25rem 0 0;
   color: var(--s-color-critical, #b23b3b);
   font-size: 0.8rem;
 }
-.feld-hinweis {
+.field-hint {
   margin: 0.25rem 0 0;
   color: #4a6572;
   font-size: 0.8rem;

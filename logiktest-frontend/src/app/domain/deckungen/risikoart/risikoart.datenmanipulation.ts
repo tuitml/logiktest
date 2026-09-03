@@ -1,10 +1,10 @@
-import { BEHALTEN, setze } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
+import { KEEP } from '../../../core/engine';
+import type { DatenmanipulationResult } from '../../../core/engine';
 import type { Versicherer } from '../../versicherer';
-import type { DeckungKontext } from '../deckung.kontext';
-import type { RisikoartId } from '../deckung.typen';
-import { RA_ALLEINSTEHEND, RA_FAHRER } from '../kombinatorik';
-import { STANDARD_RISIKOART } from '../risikoart-katalog';
+import type { DeckungContext } from '../deckung.context';
+import type { RisikoartId } from '../deckung.types';
+import { RA_FAHRER, RA_STANDALONE } from '../combination';
+import { DEFAULT_RISIKOART } from '../risikoart-catalog';
 import { risikoartWertebereich } from './risikoart.wertebereich';
 
 /**
@@ -16,21 +16,19 @@ import { risikoartWertebereich } from './risikoart.wertebereich';
  * Eine gültige Benutzerauswahl bleibt unangetastet.
  */
 export function risikoartDatenmanipulation(
-  ctx: DeckungKontext,
-): DatenManipulationErgebnis<RisikoartId> {
-  const optionen = risikoartWertebereich(ctx);
-  const aktuell = ctx.risikoartDieserDeckung();
-  if (aktuell != null && optionen.some((o) => o.wert === aktuell)) {
-    return BEHALTEN;
+  ctx: DeckungContext,
+): DatenmanipulationResult<RisikoartId> {
+  const options = risikoartWertebereich(ctx);
+  const current = ctx.ownRisikoart();
+  if (current != null && options.some((o) => o.value === current)) {
+    return KEEP;
   }
 
-  const standard = STANDARD_RISIKOART[ctx.wert<Versicherer>('versicherer') ?? 'HCR'];
-  if (optionen.some((o) => o.wert === standard)) {
-    return setze(standard);
+  const standard = DEFAULT_RISIKOART[ctx.value<Versicherer>('versicherer') ?? 'HCR'];
+  if (options.some((o) => o.value === standard)) {
+    return standard;
   }
 
-  const normale = optionen.find(
-    (o) => !RA_FAHRER.has(o.wert) && !RA_ALLEINSTEHEND.has(o.wert),
-  );
-  return setze((normale ?? optionen[0])?.wert);
+  const normal = options.find((o) => !RA_FAHRER.has(o.value) && !RA_STANDALONE.has(o.value));
+  return (normal ?? options[0])?.value;
 }

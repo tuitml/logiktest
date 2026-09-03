@@ -1,46 +1,38 @@
 import { computed, Injectable, signal } from '@angular/core';
 
-import type { AuthLese, Rolle } from '../engine/regel-kontext';
+import type { AuthReader, MandantPermission } from '../engine/rule-context';
+
+/** Einzelne Mandanten-Claims aus dem Token. */
+export type MandantClaim = 'huk' | 'vrk';
 
 /**
  * Berechtigungen des angemeldeten Benutzers.
  *
- * Kommt in echt aus dem Token; hier fest gesetzt und zur Laufzeit unveränderlich
- * (bis auf den Demo-Umschalter `setzeRollen`, damit man die Regeln ausprobieren kann).
+ * Im echten System wird `mandantPermission` aus dem Token abgeleitet und ändert
+ * sich zur Laufzeit nicht. Dieser Stub leitet es aus einem settable Signal ab,
+ * damit man die berechtigungsabhängigen Regeln vorführen kann (`setClaims`).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
-  private readonly _rollen = signal<ReadonlyArray<Rolle>>(['RBBER_HUK', 'RBBER_VRK']);
+  private readonly _claims = signal<ReadonlyArray<MandantClaim>>(['huk', 'vrk']);
 
-  readonly rollen = this._rollen.asReadonly();
-  readonly rollenText = computed(() => this._rollen().join(', ') || '—');
+  readonly mandantPermission = computed<MandantPermission>(() => {
+    const claims = this._claims();
+    const huk = claims.includes('huk');
+    const vrk = claims.includes('vrk');
+    if (huk && vrk) return 'both';
+    if (huk) return 'huk';
+    if (vrk) return 'vrk';
+    return 'none';
+  });
 
-  hatRolle(rolle: Rolle): boolean {
-    return this._rollen().includes(rolle);
+  /** Nur im Stub für Demo-Zwecke – der echte Store hat keinen Setter. */
+  setClaims(claims: ReadonlyArray<MandantClaim>): void {
+    this._claims.set([...claims]);
   }
 
-  hatNurRolle(rolle: Rolle): boolean {
-    const r = this._rollen();
-    return r.length === 1 && r[0] === rolle;
-  }
-
-  hatAlleRollen(...rollen: Rolle[]): boolean {
-    const vorhanden = this._rollen();
-    return rollen.every((r) => vorhanden.includes(r));
-  }
-
-  /** Nur für Demo-Zwecke, um die rollenabhängigen Regeln vorzuführen. */
-  setzeRollen(rollen: ReadonlyArray<Rolle>): void {
-    this._rollen.set([...rollen]);
-  }
-
-  /** Read-only-Sicht für den RegelKontext. */
-  lese(): AuthLese {
-    return {
-      rollen: () => this._rollen(),
-      hatRolle: (r) => this.hatRolle(r),
-      hatNurRolle: (r) => this.hatNurRolle(r),
-      hatAlleRollen: (...r) => this.hatAlleRollen(...r),
-    };
+  /** Read-only-Sicht für den RuleContext. */
+  reader(): AuthReader {
+    return { permission: () => this.mandantPermission() };
   }
 }

@@ -1,9 +1,9 @@
-import type { Wagniskennziffer } from '../deckung.typen';
-import type { FahrzeugKontext } from '../deckung.kontext';
+import type { Wagniskennziffer } from '../deckung.types';
+import type { FahrzeugContext } from '../deckung.context';
 
 /** Pflichtfeld, sobald relevant. */
-export function wagniskennzifferValidierung(ctx: FahrzeugKontext): string[] {
-  return ctx.wert<Wagniskennziffer>('wagniskennziffer') == null
+export function wagniskennzifferValidierung(ctx: FahrzeugContext): string[] {
+  return ctx.value<Wagniskennziffer>('wagniskennziffer') == null
     ? ['Wagniskennziffer ist ein Pflichtfeld.']
     : [];
 }

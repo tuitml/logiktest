@@ -8,16 +8,16 @@ import { FormularStore } from './formular.store';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 class="tab-ueberschrift">Ergebnis</h2>
-    <p class="ergebnis-info">Diese Daten würden an das Backend übertragen:</p>
-    <pre class="ergebnis-json">{{ json() }}</pre>
+    <h2 class="tab-heading">Ergebnis</h2>
+    <p class="result-info">Diese Daten würden an das Backend übertragen:</p>
+    <pre class="result-json">{{ json() }}</pre>
   `,
   styles: `
-    .ergebnis-info {
+    .result-info {
       color: #4a6572;
       margin: 0 0 0.75rem;
     }
-    .ergebnis-json {
+    .result-json {
       background: #0f2c3f;
       color: #d6f0f7;
       padding: 1rem;

@@ -1,15 +1,15 @@
 import type { SelectOption } from '../../../core/engine';
-import { BERUFSKLASSE_LABEL } from '../vertragsdaten.typen';
-import type { Berufsklasse } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import { BERUFSKLASSE_LABEL } from '../vertragsdaten.types';
+import type { Berufsklasse } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 export function berufsklasseWertebereich(
-  _ctx: VertragsdatenKontext,
+  _ctx: VertragsdatenContext,
 ): ReadonlyArray<SelectOption<Berufsklasse>> {
   return [
-    { wert: 'KEINE', label: BERUFSKLASSE_LABEL.KEINE },
+    { value: 'KEINE', label: BERUFSKLASSE_LABEL.KEINE },
     {
-      wert: 'MITARBEITER_SOZIALE_EINRICHTUNGEN',
+      value: 'MITARBEITER_SOZIALE_EINRICHTUNGEN',
       label: BERUFSKLASSE_LABEL.MITARBEITER_SOZIALE_EINRICHTUNGEN,
     },
   ];

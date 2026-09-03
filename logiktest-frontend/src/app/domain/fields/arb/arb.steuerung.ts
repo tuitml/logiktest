@@ -1,7 +1,7 @@
 import type { Steuerung } from '../../../core/engine';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /** Nie sichtbar, nie veränderbar – aber fachlich relevant (steuert viele andere Felder). */
-export function arbSteuerung(_ctx: VertragsdatenKontext): Steuerung {
+export function arbSteuerung(_ctx: VertragsdatenContext): Steuerung {
   return { sichtbar: false, bearbeitbar: false, relevant: true };
 }

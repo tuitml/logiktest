@@ -1,27 +1,27 @@
 import { computed, Injector, signal, type Signal } from '@angular/core';
 
-import { FeldStore } from '../../core/engine';
-import type { AuthLese, FeldId, FeldView } from '../../core/engine';
+import { FieldStore } from '../../core/engine';
+import type { AuthReader, FieldId, FieldView } from '../../core/engine';
 import {
-  baueDeckungKontext,
-  baueFahrzeugKontext,
-  baueNutzungKontext,
-  type DeckungKontext,
-  type FahrzeugKontext,
-  type NutzungKontext,
-} from './deckung.kontext';
-import { DECKUNG_FELDER } from './deckung.felder';
-import { FAHRZEUG_FELDER } from './fahrzeug/wagniskennziffer.feld';
-import { NUTZUNG_FELDER } from './grundstueck/nutzung.felder';
-import { kapazitaet, type DeckungsKapazitaet } from './kapazitaet';
+  buildDeckungContext,
+  buildFahrzeugContext,
+  buildNutzungContext,
+  type DeckungContext,
+  type FahrzeugContext,
+  type NutzungContext,
+} from './deckung.context';
+import { DECKUNG_FIELDS } from './deckung.fields';
+import { FAHRZEUG_FIELDS } from './fahrzeug/wagniskennziffer.field';
+import { NUTZUNG_FIELDS } from './grundstueck/nutzung.fields';
+import { capacity, type DeckungCapacity } from './capacity';
 import type {
-  DeckungWerte,
-  FahrzeugWerte,
-  GrundstueckWerte,
-  NutzungWerte,
+  DeckungValues,
+  FahrzeugValues,
+  GrundstueckValues,
+  NutzungValues,
   RisikoartId,
   Wagniskennziffer,
-} from './deckung.typen';
+} from './deckung.types';
 import type {
   ImportDeckung,
   ImportFahrzeug,
@@ -29,73 +29,70 @@ import type {
   ImportNutzung,
 } from '../import/import.model';
 
-let laufendeId = 0;
-const neueId = (): string =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `id-${++laufendeId}`;
+const newId = (): string => crypto.randomUUID();
+
+interface NutzungEnvIn {
+  auth: AuthReader;
+  deckungRisikoart: () => RisikoartId | undefined;
+}
+interface FahrzeugEnvIn {
+  auth: AuthReader;
+  arb: () => number | undefined;
+  deckungRisikoart: () => RisikoartId | undefined;
+}
 
 /* ----------------------------------------------------------------------------
  * Nutzung
  * ------------------------------------------------------------------------- */
 export class NutzungRuntime {
-  readonly id = neueId();
-  private readonly felder: FeldStore<NutzungKontext>;
+  readonly id = newId();
+  private readonly fields: FieldStore<NutzungContext>;
 
-  constructor(
-    umgebung: { auth: AuthLese; risikoartDerDeckung: () => RisikoartId | undefined },
-    injector: Injector,
-    name = 'nutzung',
-  ) {
-    this.felder = new FeldStore<NutzungKontext>(
-      name,
-      NUTZUNG_FELDER,
-      (s) => baueNutzungKontext(s, umgebung),
+  constructor(env: NutzungEnvIn, injector: Injector) {
+    this.fields = new FieldStore<NutzungContext>(
+      NUTZUNG_FIELDS,
+      (s) => buildNutzungContext(s, env),
       injector,
     );
   }
 
-  initialisieren(): void {
-    this.felder.initialisieren();
+  initialize(): void {
+    this.fields.initialize();
   }
 
   /** Import: Werte übernehmen, OHNE Regeln laufen zu lassen. */
-  importieren(daten: ImportNutzung): void {
-    this.felder.importieren({ nutzungsart: daten.nutzungsart, wert: daten.wert });
+  applyImport(data: ImportNutzung): void {
+    this.fields.applyImport({ nutzungsart: data.nutzungsart, wert: data.wert });
   }
 
-  nutzungsartView(): FeldView {
-    return this.felder.feld('nutzungsart').view();
+  nutzungsartView(): FieldView {
+    return this.fields.field('nutzungsart').view();
   }
-  wertView(): FeldView {
-    return this.felder.feld('wert').view();
+  wertView(): FieldView {
+    return this.fields.field('wert').view();
   }
-  nutzungsartWert(): string | undefined {
-    return this.felder.feld<string>('nutzungsart').rohWert();
+  nutzungsartValue(): string | undefined {
+    return this.fields.field<string>('nutzungsart').value();
   }
 
-  setzeNutzungsart(wert: string | undefined): void {
-    const vorher = this.nutzungsartWert();
-    this.felder.benutzerAenderung('nutzungsart', wert);
-    if (vorher !== wert) {
+  setNutzungsart(value: string | undefined): void {
+    const before = this.nutzungsartValue();
+    this.fields.applyUserChange('nutzungsart', value);
+    if (before !== value) {
       // Nutzungsart gewechselt -> Wert zurücksetzen
-      this.felder.benutzerAenderung('wert', undefined);
+      this.fields.applyUserChange('wert', undefined);
     }
   }
-  setzeWert(wert: number | undefined): void {
-    this.felder.benutzerAenderung('wert', wert);
+  setWert(value: number | undefined): void {
+    this.fields.applyUserChange('wert', value);
   }
 
-  readonly gueltig = computed(
-    () =>
-      this.felder.feld('nutzungsart').gueltig() && this.felder.feld('wert').gueltig(),
+  readonly valid = computed(
+    () => this.fields.field('nutzungsart').gueltig() && this.fields.field('wert').gueltig(),
   );
 
-  payload(): NutzungWerte {
-    return {
-      nutzungsart: this.nutzungsartWert(),
-      wert: this.felder.feld<number>('wert').rohWert(),
-    };
+  payload(): NutzungValues {
+    return { nutzungsart: this.nutzungsartValue(), wert: this.fields.field<number>('wert').value() };
   }
 }
 
@@ -103,57 +100,53 @@ export class NutzungRuntime {
  * Grundstück
  * ------------------------------------------------------------------------- */
 export class GrundstueckRuntime {
-  readonly id = neueId();
+  readonly id = newId();
   private readonly _nutzungen = signal<ReadonlyArray<NutzungRuntime>>([]);
   readonly nutzungen = this._nutzungen.asReadonly();
 
   constructor(
-    private readonly umgebung: {
-      auth: AuthLese;
-      risikoartDerDeckung: () => RisikoartId | undefined;
-    },
+    private readonly env: NutzungEnvIn,
     private readonly injector: Injector,
-    private readonly name = 'grundstueck',
   ) {}
 
-  initialisieren(): void {
+  initialize(): void {
     this._nutzungen.set([]);
-    this.nutzungHinzufuegen();
+    this.addNutzung();
   }
 
   /** Import: exakt die übergebenen Nutzungen (keine Min-1-Regel, kein Regel-Durchlauf). */
-  importieren(daten: ImportGrundstueck): void {
+  applyImport(data: ImportGrundstueck): void {
     this._nutzungen.set(
-      daten.nutzungen.map((n, i) => {
-        const nr = this.erzeugeNutzung(i + 1);
-        nr.importieren(n);
+      data.nutzungen.map((n) => {
+        const nr = this.createNutzung();
+        nr.applyImport(n);
         return nr;
       }),
     );
   }
 
-  private erzeugeNutzung(nr: number): NutzungRuntime {
-    return new NutzungRuntime(this.umgebung, this.injector, `${this.name}/nutzung#${nr}`);
+  private createNutzung(): NutzungRuntime {
+    return new NutzungRuntime(this.env, this.injector);
   }
 
-  nutzungHinzufuegen(): void {
-    const n = this.erzeugeNutzung(this._nutzungen().length + 1);
-    n.initialisieren();
+  addNutzung(): void {
+    const n = this.createNutzung();
+    n.initialize();
     this._nutzungen.update((l) => [...l, n]);
   }
-  nutzungEntfernen(n: NutzungRuntime): void {
+  removeNutzung(n: NutzungRuntime): void {
     if (this._nutzungen().length <= 1) {
       return;
     }
     this._nutzungen.update((l) => l.filter((x) => x !== n));
   }
-  readonly darfNutzungEntfernen = computed(() => this._nutzungen().length > 1);
+  readonly canRemoveNutzung = computed(() => this._nutzungen().length > 1);
 
-  readonly gueltig = computed(
-    () => this._nutzungen().length >= 1 && this._nutzungen().every((n) => n.gueltig()),
+  readonly valid = computed(
+    () => this._nutzungen().length >= 1 && this._nutzungen().every((n) => n.valid()),
   );
 
-  payload(): GrundstueckWerte {
+  payload(): GrundstueckValues {
     return { nutzungen: this._nutzungen().map((n) => n.payload()) };
   }
 }
@@ -162,246 +155,229 @@ export class GrundstueckRuntime {
  * Fahrzeug
  * ------------------------------------------------------------------------- */
 export class FahrzeugRuntime {
-  readonly id = neueId();
-  private readonly felder: FeldStore<FahrzeugKontext>;
+  readonly id = newId();
+  private readonly fields: FieldStore<FahrzeugContext>;
 
-  constructor(
-    umgebung: {
-      auth: AuthLese;
-      arb: () => number | undefined;
-      risikoartDerDeckung: () => RisikoartId | undefined;
-    },
-    injector: Injector,
-    name = 'fahrzeug',
-  ) {
-    this.felder = new FeldStore<FahrzeugKontext>(
-      name,
-      FAHRZEUG_FELDER,
-      (s) => baueFahrzeugKontext(s, umgebung),
+  constructor(env: FahrzeugEnvIn, injector: Injector) {
+    this.fields = new FieldStore<FahrzeugContext>(
+      FAHRZEUG_FIELDS,
+      (s) => buildFahrzeugContext(s, env),
       injector,
     );
   }
 
-  initialisieren(): void {
-    this.felder.initialisieren();
+  initialize(): void {
+    this.fields.initialize();
   }
-  regelnAnwenden(): void {
-    this.felder.regelnAnwenden();
+  applyRules(): void {
+    this.fields.applyRules();
   }
 
   /** Import: Wert übernehmen, OHNE Regeln laufen zu lassen. */
-  importieren(daten: ImportFahrzeug): void {
-    this.felder.importieren({ wagniskennziffer: daten.wagniskennziffer });
+  applyImport(data: ImportFahrzeug): void {
+    this.fields.applyImport({ wagniskennziffer: data.wagniskennziffer });
   }
 
-  wagniskennzifferView(): FeldView {
-    return this.felder.feld('wagniskennziffer').view();
+  wagniskennzifferView(): FieldView {
+    return this.fields.field('wagniskennziffer').view();
   }
 
-  setzeWagniskennziffer(wert: Wagniskennziffer | undefined): void {
-    this.felder.benutzerAenderung('wagniskennziffer', wert);
+  setWagniskennziffer(value: Wagniskennziffer | undefined): void {
+    this.fields.applyUserChange('wagniskennziffer', value);
   }
 
-  readonly gueltig = computed(() => this.felder.feld('wagniskennziffer').gueltig());
+  readonly valid = computed(() => this.fields.field('wagniskennziffer').gueltig());
 
-  payload(): FahrzeugWerte {
-    return { wagniskennziffer: this.felder.feld<Wagniskennziffer>('wagniskennziffer').rohWert() };
+  payload(): FahrzeugValues {
+    return { wagniskennziffer: this.fields.field<Wagniskennziffer>('wagniskennziffer').value() };
   }
 }
 
 /* ----------------------------------------------------------------------------
  * Deckung
  * ------------------------------------------------------------------------- */
-export interface DeckungUmgebungExtern {
-  readonly auth: AuthLese;
-  vertragsWert<T = unknown>(id: FeldId): T | undefined;
-  andereRisikoarten(selbst: DeckungRuntime): ReadonlyArray<RisikoartId>;
+export interface DeckungEnvExtern {
+  readonly auth: AuthReader;
+  vertragValue<T = unknown>(id: FieldId): T | undefined;
+  otherRisikoarten(self: DeckungRuntime): ReadonlyArray<RisikoartId>;
 }
 
 export class DeckungRuntime {
-  readonly id = neueId();
-  private readonly felder: FeldStore<DeckungKontext>;
+  readonly id = newId();
+  private readonly fields: FieldStore<DeckungContext>;
   private readonly _fahrzeuge = signal<ReadonlyArray<FahrzeugRuntime>>([]);
   private readonly _grundstuecke = signal<ReadonlyArray<GrundstueckRuntime>>([]);
   readonly fahrzeuge = this._fahrzeuge.asReadonly();
   readonly grundstuecke = this._grundstuecke.asReadonly();
 
   constructor(
-    private readonly umgebung: DeckungUmgebungExtern,
+    private readonly env: DeckungEnvExtern,
     private readonly injector: Injector,
-    private readonly name = 'deckung',
   ) {
-    this.felder = new FeldStore<DeckungKontext>(
-      this.name,
-      DECKUNG_FELDER,
+    this.fields = new FieldStore<DeckungContext>(
+      DECKUNG_FIELDS,
       (s) =>
-        baueDeckungKontext(s, {
-          auth: umgebung.auth,
-          vertragsWert: (id) => umgebung.vertragsWert(id),
-          andereRisikoarten: () => umgebung.andereRisikoarten(this),
+        buildDeckungContext(s, {
+          auth: env.auth,
+          vertragValue: (id) => env.vertragValue(id),
+          otherRisikoarten: () => env.otherRisikoarten(this),
         }),
       injector,
     );
   }
 
-  initialisieren(): void {
-    this.felder.initialisieren();
-    this.synchronisiereKinder();
+  initialize(): void {
+    this.fields.initialize();
+    this.syncChildren();
   }
 
   /**
    * Import: Risikoart/Rabatt/Zuschlag + Fahrzeuge/Grundstücke exakt übernehmen,
-   * OHNE Regeln (kein `synchronisiereKinder`, keine Datenmanipulation).
+   * OHNE Regeln (kein `syncChildren`, keine Datenmanipulation).
    */
-  importieren(daten: ImportDeckung): void {
-    this.felder.importieren({
-      risikoart: daten.risikoart,
-      rabatt: daten.rabatt,
-      zuschlag: daten.zuschlag,
+  applyImport(data: ImportDeckung): void {
+    this.fields.applyImport({
+      risikoart: data.risikoart,
+      rabatt: data.rabatt,
+      zuschlag: data.zuschlag,
     });
     this._fahrzeuge.set(
-      daten.fahrzeuge.map((f, i) => {
-        const fz = this.erzeugeFahrzeug(i + 1);
-        fz.importieren(f);
+      data.fahrzeuge.map((f) => {
+        const fz = this.createFahrzeug();
+        fz.applyImport(f);
         return fz;
       }),
     );
     this._grundstuecke.set(
-      daten.grundstuecke.map((g, i) => {
-        const gr = this.erzeugeGrundstueck(i + 1);
-        gr.importieren(g);
+      data.grundstuecke.map((g) => {
+        const gr = this.createGrundstueck();
+        gr.applyImport(g);
         return gr;
       }),
     );
   }
 
   /** Regeln nach einer Änderung an einer Nachbar-Deckung neu bewerten. */
-  regelnAnwenden(): void {
-    this.felder.regelnAnwenden();
-    this.synchronisiereKinder();
-    this._fahrzeuge().forEach((f) => f.regelnAnwenden());
+  applyRules(): void {
+    this.fields.applyRules();
+    this.syncChildren();
+    this._fahrzeuge().forEach((f) => f.applyRules());
   }
 
   // --- Felder -------------------------------------------------------------
-  risikoartWert(): RisikoartId | undefined {
-    return this.felder.feld<RisikoartId>('risikoart').rohWert();
+  risikoartValue(): RisikoartId | undefined {
+    return this.fields.field<RisikoartId>('risikoart').value();
   }
-  risikoartView(): FeldView {
-    return this.felder.feld('risikoart').view();
+  risikoartView(): FieldView {
+    return this.fields.field('risikoart').view();
   }
-  rabattView(): FeldView {
-    return this.felder.feld('rabatt').view();
+  rabattView(): FieldView {
+    return this.fields.field('rabatt').view();
   }
-  zuschlagView(): FeldView {
-    return this.felder.feld('zuschlag').view();
+  zuschlagView(): FieldView {
+    return this.fields.field('zuschlag').view();
   }
 
-  setzeFeld(id: FeldId, wert: unknown): void {
-    const risikoartVorher = this.risikoartWert();
-    this.felder.benutzerAenderung(id, wert);
-    if (id === 'risikoart' && risikoartVorher !== this.risikoartWert()) {
+  setField(id: FieldId, value: unknown): void {
+    const risikoartBefore = this.risikoartValue();
+    this.fields.applyUserChange(id, value);
+    if (id === 'risikoart' && risikoartBefore !== this.risikoartValue()) {
       // Risikoart gewechselt -> alle Fahrzeuge und Grundstücke entfernen
       this._fahrzeuge.set([]);
       this._grundstuecke.set([]);
-      this.synchronisiereKinder();
+      this.syncChildren();
     }
   }
 
   // --- Kapazität / Kinder ----------------------------------------------------
-  readonly kapazitaet: Signal<DeckungsKapazitaet> = computed(() =>
-    kapazitaet(this.risikoartWert()),
-  );
+  readonly capacity: Signal<DeckungCapacity> = computed(() => capacity(this.risikoartValue()));
 
-  private synchronisiereKinder(): void {
-    const k = kapazitaet(this.risikoartWert());
+  private syncChildren(): void {
+    const c = capacity(this.risikoartValue());
 
-    if (k.fahrzeuge === 'keine' && this._fahrzeuge().length > 0) {
+    if (c.fahrzeuge === 'none' && this._fahrzeuge().length > 0) {
       this._fahrzeuge.set([]);
     }
-    if (k.fahrzeuge === 'pflicht' && this._fahrzeuge().length === 0) {
-      this.fahrzeugHinzufuegen();
+    if (c.fahrzeuge === 'required' && this._fahrzeuge().length === 0) {
+      this.addFahrzeug();
     }
-    if (k.grundstuecke === 'keine' && this._grundstuecke().length > 0) {
+    if (c.grundstuecke === 'none' && this._grundstuecke().length > 0) {
       this._grundstuecke.set([]);
     }
-    if (k.grundstuecke === 'pflicht' && this._grundstuecke().length === 0) {
-      this.grundstueckHinzufuegen();
+    if (c.grundstuecke === 'required' && this._grundstuecke().length === 0) {
+      this.addGrundstueck();
     }
   }
 
-  private erzeugeFahrzeug(nr: number): FahrzeugRuntime {
+  private createFahrzeug(): FahrzeugRuntime {
     return new FahrzeugRuntime(
       {
-        auth: this.umgebung.auth,
-        arb: () => this.umgebung.vertragsWert<number>('arb'),
-        risikoartDerDeckung: () => this.risikoartWert(),
+        auth: this.env.auth,
+        arb: () => this.env.vertragValue<number>('arb'),
+        deckungRisikoart: () => this.risikoartValue(),
       },
       this.injector,
-      `${this.name}/fahrzeug#${nr}`,
     );
   }
-
-  fahrzeugHinzufuegen(): void {
-    const fz = this.erzeugeFahrzeug(this._fahrzeuge().length + 1);
-    fz.initialisieren();
+  addFahrzeug(): void {
+    const fz = this.createFahrzeug();
+    fz.initialize();
     this._fahrzeuge.update((l) => [...l, fz]);
   }
-  fahrzeugEntfernen(fz: FahrzeugRuntime): void {
-    if (this._fahrzeuge().length <= 1 && this.kapazitaet().fahrzeuge === 'pflicht') {
+  removeFahrzeug(fz: FahrzeugRuntime): void {
+    if (this._fahrzeuge().length <= 1 && this.capacity().fahrzeuge === 'required') {
       return;
     }
     this._fahrzeuge.update((l) => l.filter((x) => x !== fz));
   }
-  readonly darfFahrzeugEntfernen = computed(
-    () => this._fahrzeuge().length > 1 || this.kapazitaet().fahrzeuge !== 'pflicht',
+  readonly canRemoveFahrzeug = computed(
+    () => this._fahrzeuge().length > 1 || this.capacity().fahrzeuge !== 'required',
   );
 
-  private erzeugeGrundstueck(nr: number): GrundstueckRuntime {
+  private createGrundstueck(): GrundstueckRuntime {
     return new GrundstueckRuntime(
-      { auth: this.umgebung.auth, risikoartDerDeckung: () => this.risikoartWert() },
+      { auth: this.env.auth, deckungRisikoart: () => this.risikoartValue() },
       this.injector,
-      `${this.name}/grundstueck#${nr}`,
     );
   }
-
-  grundstueckHinzufuegen(): void {
-    const gr = this.erzeugeGrundstueck(this._grundstuecke().length + 1);
-    gr.initialisieren();
+  addGrundstueck(): void {
+    const gr = this.createGrundstueck();
+    gr.initialize();
     this._grundstuecke.update((l) => [...l, gr]);
   }
-  grundstueckEntfernen(gr: GrundstueckRuntime): void {
-    if (this._grundstuecke().length <= 1 && this.kapazitaet().grundstuecke === 'pflicht') {
+  removeGrundstueck(gr: GrundstueckRuntime): void {
+    if (this._grundstuecke().length <= 1 && this.capacity().grundstuecke === 'required') {
       return;
     }
     this._grundstuecke.update((l) => l.filter((x) => x !== gr));
   }
-  readonly darfGrundstueckEntfernen = computed(
-    () => this._grundstuecke().length > 1 || this.kapazitaet().grundstuecke !== 'pflicht',
+  readonly canRemoveGrundstueck = computed(
+    () => this._grundstuecke().length > 1 || this.capacity().grundstuecke !== 'required',
   );
 
   // --- Gültigkeit / Payload -----------------------------------------------
-  readonly gueltig = computed(() => {
-    const felderOk = this.felder.alleFelder().every((f) => f.gueltig());
-    const k = kapazitaet(this.risikoartWert());
+  readonly valid = computed(() => {
+    const fieldsOk = this.fields.allFields().every((f) => f.gueltig());
+    const c = capacity(this.risikoartValue());
 
     const fahrzeugeOk =
-      k.fahrzeuge === 'pflicht'
-        ? this._fahrzeuge().length >= 1 && this._fahrzeuge().every((f) => f.gueltig())
+      c.fahrzeuge === 'required'
+        ? this._fahrzeuge().length >= 1 && this._fahrzeuge().every((f) => f.valid())
         : this._fahrzeuge().length === 0;
 
     const grundstueckeOk =
-      k.grundstuecke === 'pflicht'
-        ? this._grundstuecke().length >= 1 && this._grundstuecke().every((g) => g.gueltig())
+      c.grundstuecke === 'required'
+        ? this._grundstuecke().length >= 1 && this._grundstuecke().every((g) => g.valid())
         : this._grundstuecke().length === 0;
 
-    return felderOk && fahrzeugeOk && grundstueckeOk;
+    return fieldsOk && fahrzeugeOk && grundstueckeOk;
   });
 
-  payload(): DeckungWerte {
+  payload(): DeckungValues {
     return {
-      risikoart: this.risikoartWert(),
-      rabatt: this.felder.feld<number>('rabatt').rohWert(),
-      zuschlag: this.felder.feld<number>('zuschlag').rohWert(),
+      risikoart: this.risikoartValue(),
+      rabatt: this.fields.field<number>('rabatt').value(),
+      zuschlag: this.fields.field<number>('zuschlag').value(),
       fahrzeuge: this._fahrzeuge().map((f) => f.payload()),
       grundstuecke: this._grundstuecke().map((g) => g.payload()),
     };

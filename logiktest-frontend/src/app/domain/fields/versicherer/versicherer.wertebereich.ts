@@ -1,6 +1,6 @@
 import type { SelectOption } from '../../../core/engine';
 import type { Versicherer } from '../../versicherer';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 const LABELS: Record<Versicherer, string> = {
   HCR: 'HCR',
@@ -8,25 +8,28 @@ const LABELS: Record<Versicherer, string> = {
   VRK: 'VRK',
 };
 
-function option(wert: Versicherer): SelectOption<Versicherer> {
-  return { wert, label: LABELS[wert] };
+function option(value: Versicherer): SelectOption<Versicherer> {
+  return { value, label: LABELS[value] };
 }
 
 /**
- * Wertebereich abhängig von den Rollen im Token:
- *   RBBER_HUK          -> HCR, HUK24
- *   RBBER_VRK          -> VRK
- *   beide Rollen       -> HCR, HUK24, VRK
+ * Wertebereich abhängig von der Mandanten-Berechtigung:
+ *   'huk'  -> HCR, HUK24
+ *   'vrk'  -> VRK
+ *   'both' -> HCR, HUK24, VRK
+ *   'none' -> keine Auswahl
  */
 export function versichererWertebereich(
-  ctx: VertragsdatenKontext,
+  ctx: VertragsdatenContext,
 ): ReadonlyArray<SelectOption<Versicherer>> {
-  const optionen: SelectOption<Versicherer>[] = [];
-  if (ctx.auth.hatRolle('RBBER_HUK')) {
-    optionen.push(option('HCR'), option('HUK24'));
+  switch (ctx.auth.permission()) {
+    case 'huk':
+      return [option('HCR'), option('HUK24')];
+    case 'vrk':
+      return [option('VRK')];
+    case 'both':
+      return [option('HCR'), option('HUK24'), option('VRK')];
+    default:
+      return [];
   }
-  if (ctx.auth.hatRolle('RBBER_VRK')) {
-    optionen.push(option('VRK'));
-  }
-  return optionen;
 }

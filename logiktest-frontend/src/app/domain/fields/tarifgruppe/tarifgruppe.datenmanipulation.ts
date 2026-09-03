@@ -1,7 +1,6 @@
-import { leeren, setze } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
-import type { Tarifgruppe } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { DatenmanipulationResult } from '../../../core/engine';
+import type { Tarifgruppe } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /**
  * Abhängig vom ersten Buchstaben des Tarifs:
@@ -10,16 +9,16 @@ import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
  *   S -> Selbstständig
  */
 export function tarifgruppeDatenmanipulation(
-  ctx: VertragsdatenKontext,
-): DatenManipulationErgebnis<Tarifgruppe> {
-  switch (ctx.wert<string>('tarif')?.[0]) {
+  ctx: VertragsdatenContext,
+): DatenmanipulationResult<Tarifgruppe> {
+  switch (ctx.value<string>('tarif')?.[0]) {
     case 'N':
-      return setze('NICHT_OED');
+      return 'NICHT_OED';
     case 'B':
-      return setze('OED');
+      return 'OED';
     case 'S':
-      return setze('SELBSTSTAENDIG');
+      return 'SELBSTSTAENDIG';
     default:
-      return leeren();
+      return undefined;
   }
 }

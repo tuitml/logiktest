@@ -5,13 +5,13 @@ import { Injectable } from '@angular/core';
  * mappt daraus nur die Felder, die sie kennt (siehe `import-mapping.ts`),
  * alles andere wird ignoriert.
  */
-export interface BackendVorbelegung {
-  readonly [feld: string]: unknown;
+export interface BackendPrefill {
+  readonly [field: string]: unknown;
   readonly deckungen?: ReadonlyArray<BackendDeckung>;
 }
 
 export interface BackendDeckung {
-  readonly [feld: string]: unknown;
+  readonly [field: string]: unknown;
   readonly risikoart?: string;
   readonly rabatt?: number;
   readonly zuschlag?: number;
@@ -20,7 +20,7 @@ export interface BackendDeckung {
 }
 
 /** Beispiel-Antwort des Backends (wie im echten System per HTTP käme). */
-const BEISPIEL_DATENSATZ: BackendVorbelegung = {
+const SAMPLE_PREFILL: BackendPrefill = {
   mandant: 'VRK',
   beginn: '2026-10-25',
   tarifgruppe: 'NICHT_OEFFENTLICHER_DIENST',
@@ -58,9 +58,9 @@ const BEISPIEL_DATENSATZ: BackendVorbelegung = {
  */
 @Injectable({ providedIn: 'root' })
 export class ImportService {
-  ladeVorbelegung(): Promise<BackendVorbelegung> {
-    return new Promise((aufloesen) => {
-      setTimeout(() => aufloesen(BEISPIEL_DATENSATZ), 400);
+  loadPrefill(): Promise<BackendPrefill> {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(SAMPLE_PREFILL), 400);
     });
   }
 }

@@ -1,10 +1,10 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 
 import { ImportService } from '../../core/backend/import.service';
 import { VertragsdatenStore } from '../../domain/fields/vertragsdaten.store';
 import { DeckungStore } from '../../domain/deckungen/deckung.store';
-import { mappeVorbelegung } from '../../domain/import/import-mapping';
-import { TAB_FELDER, type TabId } from './tab-konfiguration';
+import { mapPrefill } from '../../domain/import/import-mapping';
+import { TAB_FIELDS, type TabId } from './tab-config';
 
 /**
  * Klammert Vertragsdaten + Deckungen zusammen: aktiver Tab, Weiter-Navigation,
@@ -14,77 +14,97 @@ import { TAB_FELDER, type TabId } from './tab-konfiguration';
 export class FormularStore {
   private readonly vertragsdaten = inject(VertragsdatenStore);
   private readonly deckungen = inject(DeckungStore);
-  private readonly importDienst = inject(ImportService);
+  private readonly importService = inject(ImportService);
 
-  readonly aktiverTab = signal<TabId>('vertragsdaten');
-  readonly importHinweis = signal<string | null>(null);
-  readonly importLaeuft = signal(false);
+  readonly activeTab = signal<TabId>('vertragsdaten');
+  readonly importHint = signal<string | null>(null);
+  readonly importRunning = signal(false);
 
-  readonly vertragsdatenGueltig = computed(() =>
-    TAB_FELDER.vertragsdaten.every((id) => this.vertragsdaten.store.feld(id).gueltig()),
+  readonly vertragsdatenValid = computed(() =>
+    TAB_FIELDS.vertragsdaten.every((id) => this.vertragsdaten.store.field(id).gueltig()),
   );
-  readonly deckungenGueltig = computed(() => this.deckungen.gueltig());
+  readonly deckungenValid = computed(() => this.deckungen.valid());
+
+  constructor() {
+    // Minimales Log: bei jeder Änderung an Vertragsdaten oder Deckungen alle Werte kurz ausgeben.
+    effect(() => {
+      const vertragsdaten = Object.fromEntries(
+        this.vertragsdaten.store.allFields().map((f) => [f.module.id, f.value()]),
+      );
+      console.log('[Formular]', { vertragsdaten, deckungen: this.deckungen.payload() });
+    });
+  }
 
   /** Darf zu diesem Tab gewechselt werden? Voraussetzung: alle vorherigen Tabs gültig. */
-  darfWechselnZu(tab: TabId): boolean {
+  canSwitchTo(tab: TabId): boolean {
     switch (tab) {
       case 'vertragsdaten':
         return true;
       case 'deckungen':
-        return this.vertragsdatenGueltig();
+        return this.vertragsdatenValid();
       case 'ergebnis':
-        return this.vertragsdatenGueltig() && this.deckungenGueltig();
+        return this.vertragsdatenValid() && this.deckungenValid();
     }
   }
 
-  wechsleZu(tab: TabId): void {
-    if (this.darfWechselnZu(tab)) {
-      this.aktiverTab.set(tab);
+  switchTo(tab: TabId): void {
+    if (this.canSwitchTo(tab)) {
+      this.activeTab.set(tab);
     }
   }
 
-  weiter(): void {
-    const reihenfolge: TabId[] = ['vertragsdaten', 'deckungen', 'ergebnis'];
-    const naechster = reihenfolge[reihenfolge.indexOf(this.aktiverTab()) + 1];
-    if (naechster) {
-      this.wechsleZu(naechster);
+  next(): void {
+    const order: TabId[] = ['vertragsdaten', 'deckungen', 'ergebnis'];
+    const nextTab = order[order.indexOf(this.activeTab()) + 1];
+    if (nextTab) {
+      this.switchTo(nextTab);
     }
   }
 
   // --- Import / Reset ----------------------------------------------------
   /** Ruft das Backend, mappt die Antwort und belegt alle bekannten Felder vor. */
-  async importierenVomBackend(): Promise<void> {
-    if (this.importLaeuft()) {
+  async importFromBackend(): Promise<void> {
+    if (this.importRunning()) {
       return;
     }
-    this.importLaeuft.set(true);
-    this.importHinweis.set(null);
+    this.importRunning.set(true);
+    this.importHint.set(null);
     try {
-      const roh = await this.importDienst.ladeVorbelegung();
-      const { vertragsdaten, deckungen } = mappeVorbelegung(roh);
-      this.vertragsdaten.store.importieren(vertragsdaten);
-      this.deckungen.importieren(deckungen);
-      this.aktiverTab.set('vertragsdaten');
-      this.importHinweis.set(
+      const raw = await this.importService.loadPrefill();
+      const { vertragsdaten, deckungen } = mapPrefill(raw);
+      this.vertragsdaten.store.applyImport(vertragsdaten);
+      this.deckungen.applyImport(deckungen);
+      this.activeTab.set('vertragsdaten');
+      this.importHint.set(
         'Daten aus dem Backend übernommen. Regeln greifen erst wieder bei der nächsten Feldänderung.',
       );
     } catch {
-      this.importHinweis.set('Import fehlgeschlagen: Backend nicht erreichbar.');
+      this.importHint.set('Import fehlgeschlagen: Backend nicht erreichbar.');
     } finally {
-      this.importLaeuft.set(false);
+      this.importRunning.set(false);
     }
   }
 
-  zuruecksetzen(): void {
-    this.vertragsdaten.store.zuruecksetzen();
-    this.deckungen.initialisieren();
-    this.aktiverTab.set('vertragsdaten');
-    this.importHinweis.set(null);
+  reset(): void {
+    this.vertragsdaten.store.initialize();
+    this.deckungen.initialize();
+    this.activeTab.set('vertragsdaten');
+    this.importHint.set(null);
+  }
+
+  /**
+   * Nur für den Demo-Umschalter der Mandanten-Berechtigung: im echten System
+   * kommt die Berechtigung fix aus dem Token. Ändert man sie im Stub, muss der
+   * Zustand so nachgezogen werden, als wäre die App damit frisch gestartet.
+   */
+  refreshPermission(): void {
+    this.vertragsdaten.store.applyRules();
+    this.deckungen.initialize();
   }
 
   // --- Payload ----------------------------------------------------------
   readonly payload = computed(() => ({
-    ...this.vertragsdaten.store.werte(),
+    ...this.vertragsdaten.store.values(),
     deckungen: this.deckungen.payload(),
   }));
 }

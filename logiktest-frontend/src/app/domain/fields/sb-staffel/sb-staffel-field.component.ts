@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { SelectFeldComponent } from '../../../features/ui/select-feld.component';
-import { SELECT_FELD_TEMPLATE, VertragsdatenFeldBasis } from '../../../features/ui/vertragsdaten-feld.basis';
+import { SelectFieldComponent } from '../../../features/ui/select-field.component';
+import { SELECT_FIELD_TEMPLATE, VertragsdatenFieldBase } from '../../../features/ui/vertragsdaten-field.base';
 
 @Component({
   selector: 'app-sb-staffel-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SelectFeldComponent],
-  template: SELECT_FELD_TEMPLATE,
+  imports: [SelectFieldComponent],
+  template: SELECT_FIELD_TEMPLATE,
 })
-export class SbStaffelFieldComponent extends VertragsdatenFeldBasis {
-  protected readonly feldId = 'sbStaffel';
+export class SbStaffelFieldComponent extends VertragsdatenFieldBase {
+  protected readonly fieldId = 'sbStaffel';
 }

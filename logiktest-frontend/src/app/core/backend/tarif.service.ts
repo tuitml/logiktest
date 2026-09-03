@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
  */
 @Injectable({ providedIn: 'root' })
 export class TarifService {
-  private readonly gueltige: ReadonlyArray<string> = [
+  private readonly valid: ReadonlyArray<string> = [
     'N1526',
     'N1519',
     'N2013',
@@ -30,11 +30,11 @@ export class TarifService {
     'N1826',
   ];
 
-  gueltigeTarife(): ReadonlyArray<string> {
-    return this.gueltige;
+  validTarife(): ReadonlyArray<string> {
+    return this.valid;
   }
 
-  istGueltig(tarif: string): boolean {
-    return this.gueltige.includes(tarif);
+  isValid(tarif: string): boolean {
+    return this.valid.includes(tarif);
   }
 }

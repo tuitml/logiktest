@@ -1,7 +1,7 @@
-import type { Preisstand } from '../vertragsdaten.typen';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { Preisstand } from '../vertragsdaten.types';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /** Pflichtfeld, sobald relevant (ARB >= 2025). */
-export function preisstandValidierung(ctx: VertragsdatenKontext): string[] {
-  return ctx.wert<Preisstand>('preisstand') == null ? ['Preisstand fehlt.'] : [];
+export function preisstandValidierung(ctx: VertragsdatenContext): string[] {
+  return ctx.value<Preisstand>('preisstand') == null ? ['Preisstand fehlt.'] : [];
 }

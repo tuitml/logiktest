@@ -1,0 +1,53 @@
+<div class="deckung-card">
+  <div class="deckung-head">
+    <strong>Deckung {{ position() }}</strong>
+    @if (store.canRemove()) {
+      <button type="button" class="remove" (click)="store.remove(deckung())">Deckung entfernen</button>
+    }
+  </div>
+
+  <div class="field-grid">
+    <app-select-field
+      [view]="deckung().risikoartView()"
+      (valueChange)="changeField('risikoart', $event)"
+    />
+    <app-text-field [view]="deckung().rabattView()" (valueChange)="changeField('rabatt', $event)" />
+    <app-text-field
+      [view]="deckung().zuschlagView()"
+      (valueChange)="changeField('zuschlag', $event)"
+    />
+  </div>
+
+  @if (deckung().capacity().fahrzeuge !== 'none') {
+    <section class="section">
+      <div class="section-head">
+        <span>Fahrzeuge</span>
+        <button type="button" class="add small" (click)="deckung().addFahrzeug()">
+          + Fahrzeug hinzufügen
+        </button>
+      </div>
+      @for (fahrzeug of deckung().fahrzeuge(); track fahrzeug.id; let i = $index) {
+        <app-fahrzeug-row [deckung]="deckung()" [fahrzeug]="fahrzeug" [position]="i + 1" />
+      }
+    </section>
+  }
+
+  @if (deckung().capacity().grundstuecke !== 'none') {
+    <section class="section">
+      <div class="section-head">
+        <span>Grundstücke</span>
+        <button type="button" class="add small" (click)="deckung().addGrundstueck()">
+          + Grundstück hinzufügen
+        </button>
+      </div>
+      @for (grundstueck of deckung().grundstuecke(); track grundstueck.id; let i = $index) {
+        <app-grundstueck-card
+          [deckung]="deckung()"
+          [grundstueck]="grundstueck"
+          [position]="i + 1"
+          [risikoart]="deckung().risikoartValue()"
+        />
+      }
+    </section>
+  }
+</div>

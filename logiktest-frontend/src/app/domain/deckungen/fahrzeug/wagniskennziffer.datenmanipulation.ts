@@ -1,22 +1,22 @@
-import { BEHALTEN, leeren } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
-import type { Wagniskennziffer } from '../deckung.typen';
-import type { FahrzeugKontext } from '../deckung.kontext';
+import { KEEP } from '../../../core/engine';
+import type { DatenmanipulationResult } from '../../../core/engine';
+import type { Wagniskennziffer } from '../deckung.types';
+import type { FahrzeugContext } from '../deckung.context';
 
 /**
  * Risikoart der Deckung ungleich 17/100017 -> undefined.
  * ARB >= 2025 -> undefined.
  */
 export function wagniskennzifferDatenmanipulation(
-  ctx: FahrzeugKontext,
-): DatenManipulationErgebnis<Wagniskennziffer> {
-  const ra = ctx.risikoartDerDeckung();
+  ctx: FahrzeugContext,
+): DatenmanipulationResult<Wagniskennziffer> {
+  const ra = ctx.deckungRisikoart();
   if (ra !== '17' && ra !== '100017') {
-    return leeren();
+    return undefined;
   }
   const arb = ctx.arb();
   if (arb != null && arb >= 2025) {
-    return leeren();
+    return undefined;
   }
-  return BEHALTEN;
+  return KEEP;
 }

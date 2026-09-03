@@ -1,18 +1,18 @@
-import { BEHALTEN, leeren, setze } from '../../../core/engine';
-import type { DatenManipulationErgebnis } from '../../../core/engine';
-import type { Berufsklasse } from '../vertragsdaten.typen';
+import { KEEP } from '../../../core/engine';
+import type { DatenmanipulationResult } from '../../../core/engine';
+import type { Berufsklasse } from '../vertragsdaten.types';
 import type { Versicherer } from '../../versicherer';
-import type { VertragsdatenKontext } from '../vertragsdaten.kontext';
+import type { VertragsdatenContext } from '../vertragsdaten.context';
 
 /**
  * Versicherer ungleich VRK -> undefined.
  * Versicherer VRK und noch kein Wert -> Default "Keine Berufsklasse".
  */
 export function berufsklasseDatenmanipulation(
-  ctx: VertragsdatenKontext,
-): DatenManipulationErgebnis<Berufsklasse> {
-  if (ctx.wert<Versicherer>('versicherer') !== 'VRK') {
-    return leeren();
+  ctx: VertragsdatenContext,
+): DatenmanipulationResult<Berufsklasse> {
+  if (ctx.value<Versicherer>('versicherer') !== 'VRK') {
+    return undefined;
   }
-  return ctx.wert<Berufsklasse>('berufsklasse') == null ? setze('KEINE') : BEHALTEN;
+  return ctx.value<Berufsklasse>('berufsklasse') == null ? 'KEINE' : KEEP;
 }

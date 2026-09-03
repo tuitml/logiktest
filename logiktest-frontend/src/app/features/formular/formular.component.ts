@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { AuthStore } from '../../core/auth/auth.store';
-import type { Rolle } from '../../core/engine';
+import { AuthStore, type MandantClaim } from '../../core/auth/auth.store';
 import { VersichererFieldComponent } from '../../domain/fields/versicherer/versicherer-field.component';
 import { FormularStore } from './formular.store';
-import { TABS, type TabId } from './tab-konfiguration';
+import { TABS, type TabId } from './tab-config';
 import { TabVertragsdatenComponent } from './tab-vertragsdaten.component';
 import { TabDeckungenComponent } from './tab-deckungen.component';
 import { TabErgebnisComponent } from './tab-ergebnis.component';
@@ -27,15 +26,25 @@ export class FormularComponent {
   protected readonly auth = inject(AuthStore);
   protected readonly tabs = TABS;
 
-  protected rolleUmschalten(rolle: Rolle): void {
-    const aktuell = this.auth.rollen();
-    const neu = aktuell.includes(rolle)
-      ? aktuell.filter((r) => r !== rolle)
-      : [...aktuell, rolle];
-    this.auth.setzeRollen(neu);
+  /** Demo (nur Stub): Mandanten-Berechtigung umschalten. */
+  protected readonly demoLevels: ReadonlyArray<{ label: string; claims: MandantClaim[] }> = [
+    { label: 'HUK', claims: ['huk'] },
+    { label: 'VRK', claims: ['vrk'] },
+    { label: 'HUK + VRK', claims: ['huk', 'vrk'] },
+  ];
+
+  protected setPermission(claims: MandantClaim[]): void {
+    this.auth.setClaims(claims);
+    this.store.refreshPermission();
   }
 
-  protected istTabAktiv(id: TabId): boolean {
-    return this.store.aktiverTab() === id;
+  protected isLevelActive(claims: MandantClaim[]): boolean {
+    const target = [...claims].sort().join(',');
+    const map: Record<string, string> = { huk: 'huk', vrk: 'vrk', both: 'huk,vrk', none: '' };
+    return map[this.auth.mandantPermission()] === target;
+  }
+
+  protected isTabActive(id: TabId): boolean {
+    return this.store.activeTab() === id;
   }
 }

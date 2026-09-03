@@ -1,8 +1,8 @@
 import { STEUERUNG_AN } from '../../../core/engine';
 import type { Steuerung } from '../../../core/engine';
-import type { DeckungKontext } from '../deckung.kontext';
+import type { DeckungContext } from '../deckung.context';
 
 /** Immer sichtbar, immer veränderbar. */
-export function risikoartSteuerung(_ctx: DeckungKontext): Steuerung {
+export function risikoartSteuerung(_ctx: DeckungContext): Steuerung {
   return STEUERUNG_AN;
 }

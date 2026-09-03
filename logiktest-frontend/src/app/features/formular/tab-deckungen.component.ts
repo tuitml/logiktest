@@ -1,31 +1,26 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
 import { DeckungStore } from '../../domain/deckungen/deckung.store';
-import { DeckungKarteComponent } from './deckungen/deckung-karte.component';
+import { DeckungCardComponent } from './deckungen/deckung-card.component';
 
 @Component({
   selector: 'app-tab-deckungen',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DeckungKarteComponent],
+  imports: [DeckungCardComponent],
   template: `
-    <h2 class="tab-ueberschrift">Deckungen</h2>
+    <h2 class="tab-heading">Deckungen</h2>
 
     @for (deckung of store.deckungen(); track deckung.id; let i = $index) {
-      <app-deckung-karte [deckung]="deckung" [position]="i + 1" />
+      <app-deckung-card [deckung]="deckung" [position]="i + 1" />
     }
 
-    <button
-      type="button"
-      class="hinzufuegen"
-      [disabled]="!store.kannHinzufuegen()"
-      (click)="store.hinzufuegen()"
-    >
+    <button type="button" class="add" [disabled]="!store.canAdd()" (click)="store.add()">
       + Deckung hinzufügen
     </button>
   `,
   styles: `
-    .hinzufuegen {
+    .add {
       background: #1f6f8b;
       color: #fff;
       border: none;
@@ -35,7 +30,7 @@ import { DeckungKarteComponent } from './deckungen/deckung-karte.component';
       font-weight: 600;
       cursor: pointer;
     }
-    .hinzufuegen:disabled {
+    .add:disabled {
       background: #8fa9b3;
       cursor: not-allowed;
     }

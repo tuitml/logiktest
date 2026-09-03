@@ -1,11 +1,11 @@
 import { computed, inject, Injectable, Injector, signal } from '@angular/core';
 
-import type { FeldId } from '../../core/engine';
+import type { FieldId } from '../../core/engine';
 import { AuthStore } from '../../core/auth/auth.store';
 import { VertragsdatenStore } from '../fields/vertragsdaten.store';
 import { DeckungRuntime } from './deckung.runtime';
-import type { DeckungWerte, RisikoartId } from './deckung.typen';
-import { kannDeckungHinzufuegen } from './kombinatorik';
+import type { DeckungValues, RisikoartId } from './deckung.types';
+import { canAddDeckung } from './combination';
 import type { ImportDeckung } from '../import/import.model';
 
 /**
@@ -24,95 +24,89 @@ export class DeckungStore {
   private readonly _deckungen = signal<ReadonlyArray<DeckungRuntime>>([]);
   readonly deckungen = this._deckungen.asReadonly();
 
-  private deckungZaehler = 0;
-
   constructor() {
-    this.initialisieren();
+    this.initialize();
   }
 
-  initialisieren(): void {
-    this._deckungen.set([]);
-    this.deckungZaehler = 0;
-    const erste = this.erzeugeDeckung();
-    this._deckungen.set([erste]);
-    erste.initialisieren();
+  initialize(): void {
+    const first = this.createDeckung();
+    this._deckungen.set([first]);
+    first.initialize();
   }
 
-  private erzeugeDeckung(): DeckungRuntime {
+  private createDeckung(): DeckungRuntime {
     return new DeckungRuntime(
       {
-        auth: this.auth.lese(),
-        vertragsWert: <T>(id: FeldId) => this.vertragsdaten.store.feld<T>(id).rohWert(),
-        andereRisikoarten: (selbst) =>
+        auth: this.auth.reader(),
+        vertragValue: <T>(id: FieldId) => this.vertragsdaten.store.field<T>(id).value(),
+        otherRisikoarten: (self) =>
           this._deckungen()
-            .filter((d) => d !== selbst)
-            .map((d) => d.risikoartWert())
+            .filter((d) => d !== self)
+            .map((d) => d.risikoartValue())
             .filter((r): r is RisikoartId => r != null),
       },
       this.injector,
-      `deckung#${++this.deckungZaehler}`,
     );
   }
 
-  readonly kannHinzufuegen = computed(() =>
-    kannDeckungHinzufuegen(this._deckungen().map((d) => d.risikoartWert())),
+  readonly canAdd = computed(() =>
+    canAddDeckung(this._deckungen().map((d) => d.risikoartValue())),
   );
-  readonly kannEntfernen = computed(() => this._deckungen().length >= 2);
+  readonly canRemove = computed(() => this._deckungen().length >= 2);
 
-  hinzufuegen(): void {
-    if (!this.kannHinzufuegen()) {
+  add(): void {
+    if (!this.canAdd()) {
       return;
     }
-    const bestand = this._deckungen();
-    const neue = this.erzeugeDeckung();
-    this._deckungen.update((l) => [...l, neue]);
-    neue.initialisieren();
+    const existing = this._deckungen();
+    const next = this.createDeckung();
+    this._deckungen.update((l) => [...l, next]);
+    next.initialize();
     // bestehende Deckungen kennen jetzt eine weitere Nachbar-Risikoart
-    bestand.forEach((d) => d.regelnAnwenden());
+    existing.forEach((d) => d.applyRules());
   }
 
-  entfernen(deckung: DeckungRuntime): void {
+  remove(deckung: DeckungRuntime): void {
     if (this._deckungen().length <= 1) {
       return;
     }
     this._deckungen.update((l) => l.filter((d) => d !== deckung));
-    this._deckungen().forEach((d) => d.regelnAnwenden());
+    this._deckungen().forEach((d) => d.applyRules());
   }
 
   /**
    * Import: die Deckungsliste exakt aus den Backend-Daten aufbauen – OHNE Regeln.
    * Leere Liste -> Fallback auf genau eine Default-Deckung (Mindestanzahl 1).
    */
-  importieren(daten: ReadonlyArray<ImportDeckung>): void {
-    if (daten.length === 0) {
-      this.initialisieren();
+  applyImport(data: ReadonlyArray<ImportDeckung>): void {
+    if (data.length === 0) {
+      this.initialize();
       return;
     }
-    this._deckungen.set([]);
-    this.deckungZaehler = 0;
-    const liste = daten.map((d) => {
-      const deckung = this.erzeugeDeckung();
-      deckung.importieren(d);
-      return deckung;
-    });
-    this._deckungen.set(liste);
+    this._deckungen.set(
+      data.map((d) => {
+        const deckung = this.createDeckung();
+        deckung.applyImport(d);
+        return deckung;
+      }),
+    );
   }
 
   /** Zentrale Änderungs-Schnittstelle für die Oberfläche. */
-  aendereFeld(deckung: DeckungRuntime, id: FeldId, wert: unknown): void {
-    deckung.setzeFeld(id, wert);
+  changeField(deckung: DeckungRuntime, id: FieldId, value: unknown): void {
+    deckung.setField(id, value);
     if (id === 'risikoart') {
       this._deckungen()
         .filter((d) => d !== deckung)
-        .forEach((d) => d.regelnAnwenden());
+        .forEach((d) => d.applyRules());
     }
   }
 
-  readonly gueltig = computed(
-    () => this._deckungen().length >= 1 && this._deckungen().every((d) => d.gueltig()),
+  readonly valid = computed(
+    () => this._deckungen().length >= 1 && this._deckungen().every((d) => d.valid()),
   );
 
-  payload(): DeckungWerte[] {
+  payload(): DeckungValues[] {
     return this._deckungen().map((d) => d.payload());
   }
 }

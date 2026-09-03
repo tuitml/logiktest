@@ -1,19 +1,15 @@
-import type { BackendDeckung, BackendVorbelegung } from '../../core/backend/import.service';
-import type { VertragsdatenFeldId } from '../fields/vertragsdaten.kontext';
+import type { BackendDeckung, BackendPrefill } from '../../core/backend/import.service';
+import type { VertragsdatenFieldId } from '../fields/vertragsdaten.context';
 import type {
   Berufsklasse,
   Lebenssituation,
   Preisstand,
   SbStaffel,
   Tarifgruppe,
-} from '../fields/vertragsdaten.typen';
+} from '../fields/vertragsdaten.types';
 import type { Versicherer } from '../versicherer';
-import type { RisikoartId, Wagniskennziffer } from '../deckungen/deckung.typen';
-import type {
-  ImportDeckung,
-  ImportErgebnis,
-  ImportGrundstueck,
-} from './import.model';
+import type { RisikoartId, Wagniskennziffer } from '../deckungen/deckung.types';
+import type { ImportDeckung, ImportGrundstueck, ImportResult } from './import.model';
 
 /* ---------------------------------------------------------------------------
  * Wert-Übersetzungen Backend-Code -> App-Enum
@@ -61,39 +57,39 @@ const WAGNISKENNZIFFER: Record<string, Wagniskennziffer> = {
 /* ---------------------------------------------------------------------------
  * kleine Wert-Helfer
  * ------------------------------------------------------------------------- */
-function alsText(wert: unknown): string | undefined {
-  if (typeof wert === 'string') {
-    return wert.trim() === '' ? undefined : wert.trim();
+function asText(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    return value.trim() === '' ? undefined : value.trim();
   }
-  if (typeof wert === 'number' && !Number.isNaN(wert)) {
-    return String(wert);
-  }
-  return undefined;
-}
-
-function alsZahl(wert: unknown): number | undefined {
-  if (typeof wert === 'number') {
-    return Number.isNaN(wert) ? undefined : wert;
-  }
-  if (typeof wert === 'string' && wert.trim() !== '' && !Number.isNaN(Number(wert))) {
-    return Number(wert);
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return String(value);
   }
   return undefined;
 }
 
-function nachSchluessel<T>(tabelle: Record<string, T>, wert: unknown): T | undefined {
-  const schluessel = alsText(wert);
-  return schluessel ? tabelle[schluessel] : undefined;
+function asNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') {
+    return Number.isNaN(value) ? undefined : value;
+  }
+  if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return undefined;
 }
 
-function alsSbStaffel(wert: unknown): SbStaffel | undefined {
-  const roh = typeof wert === 'string' ? wert.replace(/^SB/i, '') : wert;
-  const zahl = alsZahl(roh);
-  return zahl === 150 || zahl === 250 || zahl === 300 ? zahl : undefined;
+function byKey<T>(table: Record<string, T>, value: unknown): T | undefined {
+  const key = asText(value);
+  return key ? table[key] : undefined;
 }
 
-function alsRisikoart(wert: unknown): RisikoartId | undefined {
-  const text = alsText(wert);
+function asSbStaffel(value: unknown): SbStaffel | undefined {
+  const raw = typeof value === 'string' ? value.replace(/^SB/i, '') : value;
+  const n = asNumber(raw);
+  return n === 150 || n === 250 || n === 300 ? n : undefined;
+}
+
+function asRisikoart(value: unknown): RisikoartId | undefined {
+  const text = asText(value);
   return text ? text.replace(/^RA_?/i, '') || undefined : undefined;
 }
 
@@ -101,18 +97,18 @@ function alsRisikoart(wert: unknown): RisikoartId | undefined {
  * DAS Mapping: pro App-Feld genau ein Eintrag.
  * Neues Feld -> hier eine Zeile ergänzen, sonst nichts.
  * ------------------------------------------------------------------------- */
-type Mapper = (roh: BackendVorbelegung) => unknown;
+type Mapper = (raw: BackendPrefill) => unknown;
 
-const VERTRAGSDATEN_MAPPING: Record<VertragsdatenFeldId, Mapper> = {
-  versicherer: (r) => nachSchluessel(VERSICHERER, r['mandant']),
-  tarif: (r) => alsText(r['tarif']),
-  arb: (r) => alsZahl(r['arb']),
-  tarifgruppe: (r) => nachSchluessel(TARIFGRUPPE, r['tarifgruppe']),
-  postleitzahl: (r) => alsText(r['postleitzahl']),
-  sbStaffel: (r) => alsSbStaffel(r['sbStaffel']),
-  berufsklasse: (r) => nachSchluessel(BERUFSKLASSE, r['berufsklasse']),
-  lebenssituation: (r) => nachSchluessel(LEBENSSITUATION, r['lebenssituation']),
-  preisstand: (r) => nachSchluessel(PREISSTAND, r['preisformelId']),
+const VERTRAGSDATEN_MAPPING: Record<VertragsdatenFieldId, Mapper> = {
+  versicherer: (r) => byKey(VERSICHERER, r['mandant']),
+  tarif: (r) => asText(r['tarif']),
+  arb: (r) => asNumber(r['arb']),
+  tarifgruppe: (r) => byKey(TARIFGRUPPE, r['tarifgruppe']),
+  postleitzahl: (r) => asText(r['postleitzahl']),
+  sbStaffel: (r) => asSbStaffel(r['sbStaffel']),
+  berufsklasse: (r) => byKey(BERUFSKLASSE, r['berufsklasse']),
+  lebenssituation: (r) => byKey(LEBENSSITUATION, r['lebenssituation']),
+  preisstand: (r) => byKey(PREISSTAND, r['preisformelId']),
 };
 
 /**
@@ -120,41 +116,41 @@ const VERTRAGSDATEN_MAPPING: Record<VertragsdatenFeldId, Mapper> = {
  * werden ignoriert; App-Felder ohne verwertbaren Wert bleiben unbelegt
  * (undefined -> nicht im Ergebnis).
  */
-export function mappeVorbelegung(roh: BackendVorbelegung): ImportErgebnis {
-  const vertragsdaten: Partial<Record<VertragsdatenFeldId, unknown>> = {};
-  for (const [feldId, mapper] of Object.entries(VERTRAGSDATEN_MAPPING) as Array<
-    [VertragsdatenFeldId, Mapper]
+export function mapPrefill(raw: BackendPrefill): ImportResult {
+  const vertragsdaten: Partial<Record<VertragsdatenFieldId, unknown>> = {};
+  for (const [fieldId, mapper] of Object.entries(VERTRAGSDATEN_MAPPING) as Array<
+    [VertragsdatenFieldId, Mapper]
   >) {
-    const wert = mapper(roh);
-    if (wert !== undefined) {
-      vertragsdaten[feldId] = wert;
+    const value = mapper(raw);
+    if (value !== undefined) {
+      vertragsdaten[fieldId] = value;
     }
   }
 
   return {
     vertragsdaten,
-    deckungen: (roh.deckungen ?? []).map(mappeDeckung),
+    deckungen: (raw.deckungen ?? []).map(mapDeckung),
   };
 }
 
-function mappeDeckung(d: BackendDeckung): ImportDeckung {
+function mapDeckung(d: BackendDeckung): ImportDeckung {
   return {
-    risikoart: alsRisikoart(d['risikoart']),
-    rabatt: alsZahl(d['rabatt']),
-    zuschlag: alsZahl(d['zuschlag']),
+    risikoart: asRisikoart(d['risikoart']),
+    rabatt: asNumber(d['rabatt']),
+    zuschlag: asNumber(d['zuschlag']),
     fahrzeuge: (d.fahrzeuge ?? []).map((f) => ({
-      wagniskennziffer: nachSchluessel(WAGNISKENNZIFFER, f['wagniskennziffer']),
+      wagniskennziffer: byKey(WAGNISKENNZIFFER, f['wagniskennziffer']),
     })),
-    grundstuecke: (d.grundstuecke ?? []).map(mappeGrundstueck),
+    grundstuecke: (d.grundstuecke ?? []).map(mapGrundstueck),
   };
 }
 
-function mappeGrundstueck(g: Record<string, unknown>): ImportGrundstueck {
+function mapGrundstueck(g: Record<string, unknown>): ImportGrundstueck {
   const nutzungen = (g['nutzungen'] as ReadonlyArray<Record<string, unknown>> | undefined) ?? [];
   return {
     nutzungen: nutzungen.map((n) => ({
-      nutzungsart: alsText(n['nutzungsart']),
-      wert: alsZahl(n['wert']),
+      nutzungsart: asText(n['nutzungsart']),
+      wert: asNumber(n['wert']),
     })),
   };
 }

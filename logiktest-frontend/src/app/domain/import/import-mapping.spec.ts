@@ -1,6 +1,6 @@
-import { mappeVorbelegung } from './import-mapping';
+import { mapPrefill } from './import-mapping';
 
-const ROH = {
+const RAW = {
   mandant: 'VRK',
   beginn: '2026-10-25',
   tarifgruppe: 'NICHT_OEFFENTLICHER_DIENST',
@@ -18,9 +18,9 @@ const ROH = {
   ],
 };
 
-describe('mappeVorbelegung', () => {
+describe('mapPrefill', () => {
   it('mappt bekannte Vertragsdaten-Felder und ignoriert alles Unbekannte', () => {
-    const { vertragsdaten } = mappeVorbelegung(ROH);
+    const { vertragsdaten } = mapPrefill(RAW);
     expect(vertragsdaten).toEqual({
       versicherer: 'VRK',
       tarifgruppe: 'NICHT_OED',
@@ -33,13 +33,13 @@ describe('mappeVorbelegung', () => {
   });
 
   it('lässt Felder ohne verwertbaren Wert weg (KEINE_AUSWAHL / leerer String)', () => {
-    const { vertragsdaten } = mappeVorbelegung(ROH);
+    const { vertragsdaten } = mapPrefill(RAW);
     expect('lebenssituation' in vertragsdaten).toBe(false);
     expect('preisstand' in vertragsdaten).toBe(false);
   });
 
   it('mappt Deckungen und entfernt das RA_-Präfix der Risikoart', () => {
-    const { deckungen } = mappeVorbelegung(ROH);
+    const { deckungen } = mapPrefill(RAW);
     expect(deckungen).toEqual([
       { risikoart: '300023', rabatt: 0, zuschlag: 0, fahrzeuge: [], grundstuecke: [] },
     ]);
