@@ -26,7 +26,8 @@ export class TarifService {
     'S2426',
     'S2600',
     'N23',
-    'N26'
+    'N26',
+    'N1826',
   ];
 
   gueltigeTarife(): ReadonlyArray<string> {

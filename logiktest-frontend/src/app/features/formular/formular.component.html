@@ -3,10 +3,14 @@
     <h1 class="titel">RS-Berechnungssystem</h1>
 
     <div class="kopf-aktionen">
-      <label class="link">
-        <input type="file" accept="application/json,.json" (change)="waehleDatei($event)" hidden />
-        Importieren
-      </label>
+      <button
+        type="button"
+        class="link"
+        [disabled]="store.importLaeuft()"
+        (click)="store.importierenVomBackend()"
+      >
+        {{ store.importLaeuft() ? 'Importiere…' : 'Importieren' }}
+      </button>
       <button type="button" class="link" (click)="store.zuruecksetzen()">Daten zurücksetzen</button>
     </div>
 

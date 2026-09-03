@@ -17,7 +17,8 @@ export class PlzService {
     '80331',
     '01067',
     '04109',
-    '96450'
+    '96450',
+    '15236',
   ]);
 
   pruefe(plz: string): Promise<boolean> {

@@ -6,6 +6,7 @@ import { VertragsdatenStore } from '../fields/vertragsdaten.store';
 import { DeckungRuntime } from './deckung.runtime';
 import type { DeckungWerte, RisikoartId } from './deckung.typen';
 import { kannDeckungHinzufuegen } from './kombinatorik';
+import type { ImportDeckung } from '../import/import.model';
 
 /**
  * Verwaltet die Liste der Deckungen des Tabs "Deckungen".
@@ -76,6 +77,25 @@ export class DeckungStore {
     }
     this._deckungen.update((l) => l.filter((d) => d !== deckung));
     this._deckungen().forEach((d) => d.regelnAnwenden());
+  }
+
+  /**
+   * Import: die Deckungsliste exakt aus den Backend-Daten aufbauen – OHNE Regeln.
+   * Leere Liste -> Fallback auf genau eine Default-Deckung (Mindestanzahl 1).
+   */
+  importieren(daten: ReadonlyArray<ImportDeckung>): void {
+    if (daten.length === 0) {
+      this.initialisieren();
+      return;
+    }
+    this._deckungen.set([]);
+    this.deckungZaehler = 0;
+    const liste = daten.map((d) => {
+      const deckung = this.erzeugeDeckung();
+      deckung.importieren(d);
+      return deckung;
+    });
+    this._deckungen.set(liste);
   }
 
   /** Zentrale Änderungs-Schnittstelle für die Oberfläche. */

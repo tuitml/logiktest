@@ -22,6 +22,12 @@ import type {
   RisikoartId,
   Wagniskennziffer,
 } from './deckung.typen';
+import type {
+  ImportDeckung,
+  ImportFahrzeug,
+  ImportGrundstueck,
+  ImportNutzung,
+} from '../import/import.model';
 
 let laufendeId = 0;
 const neueId = (): string =>
@@ -51,6 +57,11 @@ export class NutzungRuntime {
 
   initialisieren(): void {
     this.felder.initialisieren();
+  }
+
+  /** Import: Werte übernehmen, OHNE Regeln laufen zu lassen. */
+  importieren(daten: ImportNutzung): void {
+    this.felder.importieren({ nutzungsart: daten.nutzungsart, wert: daten.wert });
   }
 
   nutzungsartView(): FeldView {
@@ -110,12 +121,23 @@ export class GrundstueckRuntime {
     this.nutzungHinzufuegen();
   }
 
-  nutzungHinzufuegen(): void {
-    const n = new NutzungRuntime(
-      this.umgebung,
-      this.injector,
-      `${this.name}/nutzung#${this._nutzungen().length + 1}`,
+  /** Import: exakt die übergebenen Nutzungen (keine Min-1-Regel, kein Regel-Durchlauf). */
+  importieren(daten: ImportGrundstueck): void {
+    this._nutzungen.set(
+      daten.nutzungen.map((n, i) => {
+        const nr = this.erzeugeNutzung(i + 1);
+        nr.importieren(n);
+        return nr;
+      }),
     );
+  }
+
+  private erzeugeNutzung(nr: number): NutzungRuntime {
+    return new NutzungRuntime(this.umgebung, this.injector, `${this.name}/nutzung#${nr}`);
+  }
+
+  nutzungHinzufuegen(): void {
+    const n = this.erzeugeNutzung(this._nutzungen().length + 1);
     n.initialisieren();
     this._nutzungen.update((l) => [...l, n]);
   }
@@ -165,6 +187,11 @@ export class FahrzeugRuntime {
   }
   regelnAnwenden(): void {
     this.felder.regelnAnwenden();
+  }
+
+  /** Import: Wert übernehmen, OHNE Regeln laufen zu lassen. */
+  importieren(daten: ImportFahrzeug): void {
+    this.felder.importieren({ wagniskennziffer: daten.wagniskennziffer });
   }
 
   wagniskennzifferView(): FeldView {
@@ -222,6 +249,32 @@ export class DeckungRuntime {
     this.synchronisiereKinder();
   }
 
+  /**
+   * Import: Risikoart/Rabatt/Zuschlag + Fahrzeuge/Grundstücke exakt übernehmen,
+   * OHNE Regeln (kein `synchronisiereKinder`, keine Datenmanipulation).
+   */
+  importieren(daten: ImportDeckung): void {
+    this.felder.importieren({
+      risikoart: daten.risikoart,
+      rabatt: daten.rabatt,
+      zuschlag: daten.zuschlag,
+    });
+    this._fahrzeuge.set(
+      daten.fahrzeuge.map((f, i) => {
+        const fz = this.erzeugeFahrzeug(i + 1);
+        fz.importieren(f);
+        return fz;
+      }),
+    );
+    this._grundstuecke.set(
+      daten.grundstuecke.map((g, i) => {
+        const gr = this.erzeugeGrundstueck(i + 1);
+        gr.importieren(g);
+        return gr;
+      }),
+    );
+  }
+
   /** Regeln nach einer Änderung an einer Nachbar-Deckung neu bewerten. */
   regelnAnwenden(): void {
     this.felder.regelnAnwenden();
@@ -276,16 +329,20 @@ export class DeckungRuntime {
     }
   }
 
-  fahrzeugHinzufuegen(): void {
-    const fz = new FahrzeugRuntime(
+  private erzeugeFahrzeug(nr: number): FahrzeugRuntime {
+    return new FahrzeugRuntime(
       {
         auth: this.umgebung.auth,
         arb: () => this.umgebung.vertragsWert<number>('arb'),
         risikoartDerDeckung: () => this.risikoartWert(),
       },
       this.injector,
-      `${this.name}/fahrzeug#${this._fahrzeuge().length + 1}`,
+      `${this.name}/fahrzeug#${nr}`,
     );
+  }
+
+  fahrzeugHinzufuegen(): void {
+    const fz = this.erzeugeFahrzeug(this._fahrzeuge().length + 1);
     fz.initialisieren();
     this._fahrzeuge.update((l) => [...l, fz]);
   }
@@ -299,12 +356,16 @@ export class DeckungRuntime {
     () => this._fahrzeuge().length > 1 || this.kapazitaet().fahrzeuge !== 'pflicht',
   );
 
-  grundstueckHinzufuegen(): void {
-    const gr = new GrundstueckRuntime(
+  private erzeugeGrundstueck(nr: number): GrundstueckRuntime {
+    return new GrundstueckRuntime(
       { auth: this.umgebung.auth, risikoartDerDeckung: () => this.risikoartWert() },
       this.injector,
-      `${this.name}/grundstueck#${this._grundstuecke().length + 1}`,
+      `${this.name}/grundstueck#${nr}`,
     );
+  }
+
+  grundstueckHinzufuegen(): void {
+    const gr = this.erzeugeGrundstueck(this._grundstuecke().length + 1);
     gr.initialisieren();
     this._grundstuecke.update((l) => [...l, gr]);
   }

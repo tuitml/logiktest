@@ -27,14 +27,6 @@ export class FormularComponent {
   protected readonly auth = inject(AuthStore);
   protected readonly tabs = TABS;
 
-  protected waehleDatei(ereignis: Event): void {
-    const datei = (ereignis.target as HTMLInputElement).files?.[0];
-    if (!datei) {
-      return;
-    }
-    void datei.text().then((text) => this.store.importieren(text));
-  }
-
   protected rolleUmschalten(rolle: Rolle): void {
     const aktuell = this.auth.rollen();
     const neu = aktuell.includes(rolle)

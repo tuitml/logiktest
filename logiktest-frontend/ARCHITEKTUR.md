@@ -33,6 +33,17 @@ dem Import sofort aus den importierten Werten neu – nur die wertändernde
 (mehr) in seinem aktuellen Wertebereich liegt – so wird eine inkonsistente Import-
 Auswahl sichtbar, statt stillschweigend „leer, aber gültig“ zu sein.
 
+### Import vom Backend (`domain/import/`)
+
+„Importieren" ruft `ImportService.ladeVorbelegung()` (Stub, liefert die Backend-JSON).
+`import-mapping.ts` übersetzt sie: **eine Tabelle mit genau einem Eintrag pro
+App-Feld** (`VERTRAGSDATEN_MAPPING`) plus `mappeDeckung()`. Backend-Feld ≠ App-Feld
+(`mandant`→`versicherer`, `SB250`→`250`, `RA_300023`→`300023`, …); unbekannte
+Backend-Felder werden ignoriert, App-Felder ohne verwertbaren Wert bleiben unbelegt.
+`FormularStore.importierenVomBackend()` steckt das Ergebnis in
+`vertragsdatenStore.importieren(...)` + `deckungStore.importieren(...)` – beide OHNE
+Regel-Durchlauf. Neues Feld importierbar machen = eine Zeile in `VERTRAGSDATEN_MAPPING`.
+
 ## Ein Feld = ein Ordner (`src/app/domain/fields/<feld>/`)
 
 ```
@@ -41,7 +52,7 @@ Auswahl sichtbar, statt stillschweigend „leer, aber gültig“ zu sein.
 <feld>.datenmanipulation.ts  (ctx) => setze(x) | leeren() | BEHALTEN
 <feld>.validierung.ts        (ctx) => string[]   (+ optional asyncValidierung)
 <feld>.feld.ts               setzt die Teile zu einem FeldModul zusammen
-<feld>-field.component.ts    ~4-Zeilen-Wrapper: nur feldId, delegiert an FeldHostComponent
+<feld>-field.component.ts    ~4-Zeilen-Wrapper: nur feldId, delegiert an app-text-feld / app-select-feld
 ```
 
 `vertragsdaten.felder.ts` sammelt alle FeldModule; `vertragsdaten.store.ts` ist der

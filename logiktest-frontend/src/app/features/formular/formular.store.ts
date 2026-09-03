@@ -1,7 +1,9 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
+import { ImportService } from '../../core/backend/import.service';
 import { VertragsdatenStore } from '../../domain/fields/vertragsdaten.store';
 import { DeckungStore } from '../../domain/deckungen/deckung.store';
+import { mappeVorbelegung } from '../../domain/import/import-mapping';
 import { TAB_FELDER, type TabId } from './tab-konfiguration';
 
 /**
@@ -12,9 +14,11 @@ import { TAB_FELDER, type TabId } from './tab-konfiguration';
 export class FormularStore {
   private readonly vertragsdaten = inject(VertragsdatenStore);
   private readonly deckungen = inject(DeckungStore);
+  private readonly importDienst = inject(ImportService);
 
   readonly aktiverTab = signal<TabId>('vertragsdaten');
   readonly importHinweis = signal<string | null>(null);
+  readonly importLaeuft = signal(false);
 
   readonly vertragsdatenGueltig = computed(() =>
     TAB_FELDER.vertragsdaten.every((id) => this.vertragsdaten.store.feld(id).gueltig()),
@@ -48,17 +52,26 @@ export class FormularStore {
   }
 
   // --- Import / Reset ----------------------------------------------------
-  importieren(rohText: string): void {
+  /** Ruft das Backend, mappt die Antwort und belegt alle bekannten Felder vor. */
+  async importierenVomBackend(): Promise<void> {
+    if (this.importLaeuft()) {
+      return;
+    }
+    this.importLaeuft.set(true);
+    this.importHinweis.set(null);
     try {
-      const daten = JSON.parse(rohText) as Record<string, unknown>;
-      const vertragsdaten = (daten['vertragsdaten'] ?? daten) as Record<string, unknown>;
+      const roh = await this.importDienst.ladeVorbelegung();
+      const { vertragsdaten, deckungen } = mappeVorbelegung(roh);
       this.vertragsdaten.store.importieren(vertragsdaten);
-      this.importHinweis.set(
-        'Daten importiert. Regeln greifen erst wieder bei der nächsten Feldänderung.',
-      );
+      this.deckungen.importieren(deckungen);
       this.aktiverTab.set('vertragsdaten');
+      this.importHinweis.set(
+        'Daten aus dem Backend übernommen. Regeln greifen erst wieder bei der nächsten Feldänderung.',
+      );
     } catch {
-      this.importHinweis.set('Import fehlgeschlagen: ungültiges JSON.');
+      this.importHinweis.set('Import fehlgeschlagen: Backend nicht erreichbar.');
+    } finally {
+      this.importLaeuft.set(false);
     }
   }
 
