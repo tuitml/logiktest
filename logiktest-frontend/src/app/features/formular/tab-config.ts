@@ -30,5 +30,6 @@ export const TAB_FIELDS: Record<'vertragsdaten', ReadonlyArray<FieldId>> = {
     'berufsklasse',
     'lebenssituation',
     'preisstand',
+    'zahlungsart',
   ],
 };

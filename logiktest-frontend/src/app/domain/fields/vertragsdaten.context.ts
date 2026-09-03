@@ -11,7 +11,8 @@ export type VertragsdatenFieldId =
   | 'sbStaffel'
   | 'berufsklasse'
   | 'lebenssituation'
-  | 'preisstand';
+  | 'preisstand'
+  | 'zahlungsart';
 
 /** Kontext-Typ für Vertragsdaten-Felder – hier identisch zum Basiskontext. */
 export type VertragsdatenContext = RuleContext;

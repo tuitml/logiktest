@@ -6,6 +6,7 @@ import type {
   Preisstand,
   SbStaffel,
   Tarifgruppe,
+   Zahlungsart,
 } from '../fields/vertragsdaten.types';
 import type { Versicherer } from '../versicherer';
 import type { RisikoartId, Wagniskennziffer } from '../deckungen/deckung.types';
@@ -46,6 +47,13 @@ const LEBENSSITUATION: Record<string, Lebenssituation> = {
 const PREISSTAND: Record<string, Preisstand> = {
   '20251001_ARB2025': '20251001_ARB2025',
   '20261001_ARB2026': '20261001_ARB2026',
+};
+
+const ZAHLUNGSART: Record<string, Zahlungsart> = {
+  UEBERWEISUNG: 'UEBERWEISUNG',
+  LASTSCHRIFT: 'LASTSCHRIFTEINZUG',
+  LASTSCHRIFTEINZUG: 'LASTSCHRIFTEINZUG',
+  // "KEINE_ANGABE" bewusst ohne Eintrag -> undefined
 };
 
 const WAGNISKENNZIFFER: Record<string, Wagniskennziffer> = {
@@ -109,6 +117,7 @@ const VERTRAGSDATEN_MAPPING: Record<VertragsdatenFieldId, Mapper> = {
   berufsklasse: (r) => byKey(BERUFSKLASSE, r['berufsklasse']),
   lebenssituation: (r) => byKey(LEBENSSITUATION, r['lebenssituation']),
   preisstand: (r) => byKey(PREISSTAND, r['preisformelId']),
+  zahlungsart: (r) => byKey(ZAHLUNGSART, r['zahlungsart']),
 };
 
 /**

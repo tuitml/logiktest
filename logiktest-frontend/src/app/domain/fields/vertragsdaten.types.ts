@@ -34,3 +34,9 @@ export const PREISSTAND_LABEL: Record<Preisstand, string> = {
 };
 
 export type SbStaffel = 150 | 250 | 300;
+
+export type Zahlungsart = 'UEBERWEISUNG' | 'LASTSCHRIFTEINZUG';
+export const ZAHLUNGSART_LABEL: Record<Zahlungsart, string> = {
+  UEBERWEISUNG: 'Überweisung',
+  LASTSCHRIFTEINZUG: 'Lastschrifteinzug',
+};

@@ -6,6 +6,7 @@ import { SbStaffelFieldComponent } from '../../domain/fields/sb-staffel/sb-staff
 import { BerufsklasseFieldComponent } from '../../domain/fields/berufsklasse/berufsklasse-field.component';
 import { LebenssituationFieldComponent } from '../../domain/fields/lebenssituation/lebenssituation-field.component';
 import { PreisstandFieldComponent } from '../../domain/fields/preisstand/preisstand-field.component';
+import { ZahlungsartFieldComponent } from '../../domain/fields/zahlungsart/zahlungsart-field.component';
 
 /**
  * Nur Layout: die Feld-Komponenten in einem 2-Spalten-Grid. Unsichtbare Felder
@@ -23,6 +24,7 @@ import { PreisstandFieldComponent } from '../../domain/fields/preisstand/preisst
     BerufsklasseFieldComponent,
     LebenssituationFieldComponent,
     PreisstandFieldComponent,
+    ZahlungsartFieldComponent,
   ],
   template: `
     <h2 class="tab-heading">Vertragsdaten</h2>
@@ -33,6 +35,7 @@ import { PreisstandFieldComponent } from '../../domain/fields/preisstand/preisst
       <app-berufsklasse-field />
       <app-lebenssituation-field />
       <app-preisstand-field />
+      <app-zahlungsart-field />
     </div>
   `,
 })

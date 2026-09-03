@@ -10,6 +10,7 @@ import { sbStaffelField } from './sb-staffel/sb-staffel.field';
 import { berufsklasseField } from './berufsklasse/berufsklasse.field';
 import { lebenssituationField } from './lebenssituation/lebenssituation.field';
 import { preisstandField } from './preisstand/preisstand.field';
+import { zahlungsartField } from './zahlungsart/zahlungsart.field';
 
 /**
  * Alle Felder rund um die Vertragsdaten.
@@ -26,4 +27,5 @@ export const VERTRAGSDATEN_FIELDS: ReadonlyArray<FieldModule<any, VertragsdatenC
   berufsklasseField,
   lebenssituationField,
   preisstandField,
+  zahlungsartField,
 ];
